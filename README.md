@@ -1,4 +1,4 @@
-# Automate Github Classroom Grades Reports
+# Dashboard Classroom B4OS - Automate Github Classroom Grades Reports
 
 ## GitHub Classroom CLI
 
