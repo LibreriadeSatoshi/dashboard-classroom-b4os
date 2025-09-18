@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { GithubLogo, Calendar, Star, GitFork, Eye } from 'phosphor-react'
+import { GithubLogo, Calendar } from 'phosphor-react'
 import GitHubAvatar from './GitHubAvatar'
 
 interface GitHubTooltipProps {
@@ -22,25 +22,30 @@ interface GitHubProfile {
   html_url: string
 }
 
-interface GitHubRepo {
-  name: string
-  description: string
-  stargazers_count: number
-  forks_count: number
-  watchers_count: number
-  language: string
-  updated_at: string
-  html_url: string
+interface GitHubEvent {
+  id: string
+  type: string
+  repo: {
+    name: string
+    url: string
+  }
+  created_at: string
+  payload?: {
+    commits?: Array<{
+      message: string
+      url: string
+    }>
+  }
 }
 
 // Cache global para evitar llamadas repetidas
 const profileCache = new Map<string, { data: GitHubProfile; timestamp: number }>()
-const reposCache = new Map<string, { data: GitHubRepo[]; timestamp: number }>()
+const eventsCache = new Map<string, { data: GitHubEvent[]; timestamp: number }>()
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutos
 
 export default function GitHubTooltip({ username, isVisible, position }: GitHubTooltipProps) {
   const [profile, setProfile] = useState<GitHubProfile | null>(null)
-  const [repos, setRepos] = useState<GitHubRepo[]>([])
+  const [events, setEvents] = useState<GitHubEvent[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
@@ -66,18 +71,22 @@ export default function GitHubTooltip({ username, isVisible, position }: GitHubT
         profileCache.set(username, { data: profileData, timestamp: Date.now() })
       }
 
-      // Verificar cache para repos
-      const cachedRepos = reposCache.get(username)
-      if (cachedRepos && Date.now() - cachedRepos.timestamp < CACHE_DURATION) {
-        setRepos(cachedRepos.data)
+      // Verificar cache para events
+      const cachedEvents = eventsCache.get(username)
+      if (cachedEvents && Date.now() - cachedEvents.timestamp < CACHE_DURATION) {
+        setEvents(cachedEvents.data)
       } else {
         try {
-          const reposData = await fetchWithRetry<GitHubRepo[]>(`https://api.github.com/users/${username}/repos?sort=stars&per_page=3`)
-          setRepos(reposData)
-          reposCache.set(username, { data: reposData, timestamp: Date.now() })
-        } catch (reposError) {
-          console.warn('No se pudieron cargar los repositorios:', reposError)
-          // Continuar sin repos - el perfil es suficiente
+          const eventsData = await fetchWithRetry<GitHubEvent[]>(`https://api.github.com/users/${username}/events?per_page=10`)
+          // Filter for PushEvents and PullRequestEvents
+          const contributionEvents = eventsData.filter(event => 
+            event.type === 'PushEvent' || event.type === 'PullRequestEvent'
+          )
+          setEvents(contributionEvents.slice(0, 5)) // Show top 5 contributions
+          eventsCache.set(username, { data: contributionEvents.slice(0, 5), timestamp: Date.now() })
+        } catch (eventsError) {
+          console.warn('No se pudieron cargar los eventos:', eventsError)
+          // Continuar sin eventos - el perfil es suficiente
         }
       }
     } catch (err) {
@@ -211,41 +220,43 @@ export default function GitHubTooltip({ username, isVisible, position }: GitHubT
             <span>Miembro desde {new Date(profile.created_at).getFullYear()}</span>
           </div>
 
-          {/* Top Repositories */}
-          {repos.length > 0 && (
+          {/* Recent Contributions */}
+          {events.length > 0 && (
             <div>
-              <h4 className="text-sm font-semibold text-gray-900 mb-2">Repos destacados</h4>
+              <h4 className="text-sm font-semibold text-gray-900 mb-2">Contribuciones recientes</h4>
               <div className="space-y-2">
-                {repos.map((repo) => (
-                  <div key={repo.name} className="border border-gray-200 rounded-lg p-2">
+                {events.map((event) => (
+                  <div key={event.id} className="border border-gray-200 rounded-lg p-2">
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
                         <a
-                          href={repo.html_url}
+                          href={`https://github.com/${event.repo.name}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 hover:text-blue-800 font-medium text-sm truncate block"
                         >
-                          {repo.name}
+                          {event.repo.name}
                         </a>
-                        {repo.description && (
-                          <p className="text-gray-600 text-xs mt-1 line-clamp-1">{repo.description}</p>
-                        )}
-                        {repo.language && (
-                          <span className="inline-block bg-blue-100 text-blue-800 text-xs px-1 py-0.5 rounded mt-1">
-                            {repo.language}
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${
+                            event.type === 'PushEvent' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {event.type === 'PushEvent' ? 'Push' : 'Pull Request'}
                           </span>
+                          <span className="text-gray-500 text-xs">
+                            {new Date(event.created_at).toLocaleDateString('es-ES', { 
+                              day: 'numeric', 
+                              month: 'short' 
+                            })}
+                          </span>
+                        </div>
+                        {event.payload?.commits && event.payload.commits.length > 0 && (
+                          <p className="text-gray-600 text-xs mt-1 line-clamp-1">
+                            {event.payload.commits[0].message}
+                          </p>
                         )}
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 ml-2">
-                        <div className="flex items-center gap-1">
-                          <Star className="h-3 w-3" />
-                          {repo.stargazers_count}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <GitFork className="h-3 w-3" />
-                          {repo.forks_count}
-                        </div>
                       </div>
                     </div>
                   </div>
