@@ -338,8 +338,9 @@ class ClassroomSupabaseSync:
         if not name or not isinstance(name, str):
             raise DataValidationError("Assignment name must be a non-empty string")
         
-        # Replace spaces with hyphens and limit length
-        formatted = name.replace(' ', '-')[:30]
+        # Replace spaces with hyphens but don't truncate
+        # Removed [:30] limit to preserve full assignment names
+        formatted = name.replace(' ', '-')
         logger.debug(f"Formatted assignment name: '{name}' -> '{formatted}'")
         return formatted
     
