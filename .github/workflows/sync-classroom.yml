@@ -40,18 +40,23 @@ jobs:
         # GitHub CLI ya está disponible en ubuntu-latest
         gh --version
         
-    - name: 📚 Install GitHub Classroom Extension
-      run: |
-        # Instalar la extensión de GitHub Classroom
-        gh extension install github/gh-classroom
-        
     - name: 🔐 Configure GitHub CLI
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         # Usar token del repositorio para autenticación
         echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
         
+    - name: 📚 Install GitHub Classroom Extension
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        # Instalar la extensión de GitHub Classroom
+        gh extension install github/gh-classroom
+        
     - name: 🏰 Run Classroom Sync
       env:
+        GH_TOKEN: ${{ github.token }}
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         CLASSROOM_NAME: ${{ inputs.classroom_name || secrets.CLASSROOM_NAME }}
