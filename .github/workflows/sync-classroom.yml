@@ -40,6 +40,11 @@ jobs:
         # GitHub CLI ya está disponible en ubuntu-latest
         gh --version
         
+    - name: 📚 Install GitHub Classroom Extension
+      run: |
+        # Instalar la extensión de GitHub Classroom
+        gh extension install github/gh-classroom
+        
     - name: 🔐 Configure GitHub CLI
       run: |
         # Usar token del repositorio para autenticación
