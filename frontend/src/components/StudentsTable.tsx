@@ -2,7 +2,13 @@
 
 import { useState, useMemo } from 'react'
 import { type Student, type Assignment, type ConsolidatedGrade } from '@/lib/supabase'
-import { MagnifyingGlass, Funnel, Info, CaretUp, CaretDown } from 'phosphor-react'
+import { MagnifyingGlass, Funnel, Info, CaretUp, CaretDown, Eye, Crown } from 'phosphor-react'
+import { 
+  generateAnonymousId, 
+  findUserByRealUsername, 
+  getAnonymousDescription
+} from '@/utils/anonymization'
+import LOTRAvatar from './LOTRAvatar'
 
 interface StudentsTableProps {
   students: Student[]
@@ -29,15 +35,44 @@ export default function StudentsTable({ assignments, grades }: StudentsTableProp
     return 0
   }
 
+  // Check if search term matches a real username (exact match for self-identification)
+  const searchedUserInfo = useMemo(() => {
+    if (!searchTerm) return null
+    
+    // First check for exact match (for self-identification feature)
+    const allUsernames = grades.map(g => g.github_username)
+    const exactMatch = allUsernames.find(username => 
+      username.toLowerCase() === searchTerm.toLowerCase()
+    )
+    
+    if (exactMatch) {
+      const result = findUserByRealUsername(exactMatch, allUsernames)
+      return result.found ? {
+        realUsername: exactMatch,
+        anonymousId: result.anonymousId
+      } : null
+    }
+    
+    return null
+  }, [searchTerm, grades])
+
   // Filter and sort data
   const filteredAndSortedGrades = useMemo(() => {
     let filtered = grades
 
     // Filter by search term
     if (searchTerm) {
-      filtered = filtered.filter(grade => 
-        grade.github_username.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      filtered = filtered.filter(grade => {
+        const anonymousId = generateAnonymousId(grade.github_username)
+        return (
+          // Search by anonymous ID
+          anonymousId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          // Search by assignment name
+          grade.assignment_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          // Search by real username (partial match)
+          grade.github_username.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      })
     }
 
     // Filter by assignment
@@ -45,6 +80,17 @@ export default function StudentsTable({ assignments, grades }: StudentsTableProp
       filtered = filtered.filter(grade => 
         grade.assignment_name === selectedAssignment
       )
+    }
+
+    // If user searched their real username, move their records to top
+    if (searchedUserInfo) {
+      filtered = filtered.sort((a, b) => {
+        const aIsSearched = a.github_username.toLowerCase() === searchedUserInfo.realUsername.toLowerCase()
+        const bIsSearched = b.github_username.toLowerCase() === searchedUserInfo.realUsername.toLowerCase()
+        if (aIsSearched && !bIsSearched) return -1
+        if (!aIsSearched && bIsSearched) return 1
+        return 0
+      })
     }
 
     // Sort data
@@ -105,42 +151,68 @@ export default function StudentsTable({ assignments, grades }: StudentsTableProp
     <div className="bg-white rounded-xl border border-gray-200 shadow-xl">
       {/* Header */}
       <div className="p-6 border-b border-gray-200">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <Info size={24} className="text-blue-600" />
-            Challenges de Estudiantes
+        <div className="flex flex-col gap-4">
+          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 epic-title">
+            <Crown size={24} className="text-amber-600" />
+            Habitantes de la Tierra Media
           </h2>
           
-          {/* Search */}
-          <div className="relative flex-1">
-            <MagnifyingGlass 
-              size={20} 
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" 
-            />
-            <input
-              type="text"
-              placeholder="Buscar por nombre de usuario..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
+          {/* Search result indicator */}
+          {searchedUserInfo && (
+            <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3 shadow-sm">
+              <div className="flex-shrink-0">
+                <Crown className="h-6 w-6 text-amber-600" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-amber-900 mb-1">
+                  🎯 ¡Identidad Revelada!
+                </div>
+                <div className="text-sm text-amber-800">
+                  Tu identidad secreta en la Tierra Media es: 
+                  <span className="font-bold text-amber-900 ml-1 px-2 py-1 bg-amber-100 rounded">
+                    {searchedUserInfo.anonymousId}
+                  </span>
+                </div>
+                <div className="text-xs text-amber-700 mt-1 italic">
+                  Solo tú puedes ver este mensaje
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Search and Filter Controls */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Search */}
+            <div className="relative flex-1">
+              <MagnifyingGlass 
+                size={20} 
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" 
+              />
+              <input
+                type="text"
+                placeholder="Busca por tu username real de GitHub o por nombre anónimo..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200"
+              />
+            </div>
 
-          {/* Assignment Filter */}
-          <div className="relative">
-            <Funnel size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <select
-              value={selectedAssignment}
-              onChange={(e) => setSelectedAssignment(e.target.value)}
-              className="pl-10 pr-8 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none min-w-[200px]"
-            >
-              <option value="">Todos los challenges</option>
-              {assignments.map(assignment => (
-                <option key={assignment.id} value={assignment.name}>
-                  {assignment.name} ({assignment.points_available} pts)
-                </option>
-              ))}
-            </select>
+            {/* Assignment Filter */}
+            <div className="relative">
+              <Funnel size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <select
+                value={selectedAssignment}
+                onChange={(e) => setSelectedAssignment(e.target.value)}
+                className="pl-10 pr-8 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 appearance-none min-w-[200px] transition-all duration-200"
+              >
+                <option value="">Todas las aventuras</option>
+                {assignments.map(assignment => (
+                  <option key={assignment.id} value={assignment.name}>
+                    {assignment.name} ({assignment.points_available} pts)
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </div>
@@ -155,7 +227,8 @@ export default function StudentsTable({ assignments, grades }: StudentsTableProp
                 onClick={() => handleSort('github_username')}
               >
                 <div className="flex items-center gap-2">
-                  Usuario
+                  <Crown className="h-4 w-4 text-amber-500" />
+                  Habitante de la Tierra Media
                   {getSortIcon('github_username')}
                 </div>
               </th>
@@ -200,18 +273,40 @@ export default function StudentsTable({ assignments, grades }: StudentsTableProp
           <tbody className="divide-y divide-gray-200">
             {filteredAndSortedGrades.map((grade, index) => {
               const percentage = calculatePercentage(grade.points_awarded || 0, grade.points_available || 0)
+              const anonymousId = generateAnonymousId(grade.github_username)
+              const description = getAnonymousDescription(anonymousId)
+              const isSearchedUser = searchedUserInfo?.realUsername.toLowerCase() === grade.github_username.toLowerCase()
+              
               return (
-                <tr key={`${grade.github_username}-${grade.assignment_name}-${index}`} className="hover:bg-gray-50">
+                <tr 
+                  key={`${grade.github_username}-${grade.assignment_name}-${index}`} 
+                  className={`hover:bg-gray-50 transition-colors duration-200 ${
+                    isSearchedUser ? 'bg-amber-50 border-l-4 border-amber-500 shadow-sm' : ''
+                  }`}
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-8 w-8">
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
-                          {grade.github_username.charAt(0).toUpperCase()}
-                        </div>
+                      <div className="flex-shrink-0">
+                        <LOTRAvatar 
+                          githubUsername={grade.github_username}
+                          size="lg"
+                          className="transition-transform duration-200 hover:scale-110"
+                        />
                       </div>
                       <div className="ml-3">
-                        <div className="text-sm font-medium text-gray-900">
-                          {grade.github_username}
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm font-medium text-gray-900">
+                            {anonymousId}
+                          </div>
+                          {isSearchedUser && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                              <Crown className="h-3 w-3 mr-1" />
+                              ¡Eres tú!
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500 italic">
+                          {description}
                         </div>
                       </div>
                     </div>
@@ -257,18 +352,18 @@ export default function StudentsTable({ assignments, grades }: StudentsTableProp
         </table>
       </div>
 
-      {/* Footer */}
-      <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-        <div className="flex items-center justify-between text-sm text-gray-600">
-          <span>
-            Mostrando {filteredAndSortedGrades.length} de {grades.length} registros
-          </span>
-          <div className="flex items-center gap-4">
-            <span>Ordenar por: {sortField}</span>
-            <span>Dirección: {sortDirection === 'asc' ? 'Ascendente' : 'Descendente'}</span>
-          </div>
-        </div>
-      </div>
+       {/* Footer */}
+       <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-xl">
+         <div className="flex items-center justify-between text-sm text-gray-600">
+           <span>
+             Mostrando {filteredAndSortedGrades.length} de {grades.length} registros
+           </span>
+           <div className="flex items-center gap-4">
+             <span>Ordenar por: {sortField}</span>
+             <span>Dirección: {sortDirection === 'asc' ? 'Ascendente' : 'Descendente'}</span>
+           </div>
+         </div>
+       </div>
     </div>
   )
 }

@@ -18,19 +18,27 @@ export default function StatsCard({ title, value, icon: Icon, color }: StatsCard
   const getEmoji = (title: string) => {
     switch (title) {
       case 'Estudiantes': return '👥'
+      case 'Habitantes de la Tierra Media': return '🏰'
       case 'Challenges liberados': return '📚'
+      case 'Aventuras Épicas': return '⚔️'
       case 'Challenges resueltos/en-progreso': return '🎓'
+      case 'Logros Conseguidos': return '🏆'
       case 'Promedio': return '📊'
-      default: return '📈'
+      case 'Gloria del Reino': return '👑'
+      default: return '🎯'
     }
   }
 
   const getDescription = (title: string, value: string | number) => {
     switch (title) {
       case 'Estudiantes': return `${value} desarrolladores en formación`
+      case 'Habitantes de la Tierra Media': return `${value} aventurero${value !== 1 ? 's' : ''} en el reino`
       case 'Challenges liberados': return `${value} challenge${value !== 1 ? 's' : ''} activo${value !== 1 ? 's' : ''}`
+      case 'Aventuras Épicas': return `${value} misión${value !== 1 ? 'es' : ''} disponible${value !== 1 ? 's' : ''}`
       case 'Challenges resueltos/en-progreso': return `${value} evaluación${value !== 1 ? 'es' : ''} completada${value !== 1 ? 's' : ''}`
+      case 'Logros Conseguidos': return `${value} hazaña${value !== 1 ? 's' : ''} completada${value !== 1 ? 's' : ''}`
       case 'Promedio': return `Rendimiento general del curso`
+      case 'Gloria del Reino': return `Honor y prestigio del reino`
       default: return 'Métrica del sistema'
     }
   }
