@@ -220,7 +220,7 @@ export default function Dashboard() {
             color="green"
           />
           <StatsCard
-            title="Logros Conseguidos"
+            title="Desafíos Aceptados/En-Progreso"
             value={stats.totalGrades}
             icon={Shield}
             color="purple"
