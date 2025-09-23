@@ -42,12 +42,12 @@ jobs:
         
     - name: 🔐 Configure GitHub CLI
       run: |
-        # Usar token del repositorio para autenticación
-        echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+        # Usar token personal para autenticación (con permisos de Classroom)
+        echo "${{ secrets.GITHUB_PERSONAL_TOKEN }}" | gh auth login --with-token
         
     - name: 📚 Install GitHub Classroom Extension
       env:
-        GH_TOKEN: ${{ github.token }}
+        GH_TOKEN: ${{ secrets.GITHUB_PERSONAL_TOKEN }}
       run: |
         # Instalar la extensión de GitHub Classroom
         gh extension install github/gh-classroom
