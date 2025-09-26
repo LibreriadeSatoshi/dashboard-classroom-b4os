@@ -14,15 +14,24 @@ export default function Footer() {
       
       {/* Floating particles */}
       <div className="absolute inset-0 overflow-hidden">
-        {Array.from({ length: 8 }).map((_, i) => (
+        {[
+          { left: '20%', top: '30%', delay: '0s', duration: '3s' },
+          { left: '60%', top: '70%', delay: '1s', duration: '4s' },
+          { left: '80%', top: '20%', delay: '2s', duration: '3.5s' },
+          { left: '30%', top: '80%', delay: '0.5s', duration: '4.5s' },
+          { left: '70%', top: '40%', delay: '1.5s', duration: '2.5s' },
+          { left: '10%', top: '60%', delay: '2.5s', duration: '3.8s' },
+          { left: '90%', top: '50%', delay: '0.8s', duration: '4.2s' },
+          { left: '40%', top: '15%', delay: '1.8s', duration: '3.2s' }
+        ].map((particle, i) => (
           <div
             key={i}
             className="absolute w-1 h-1 bg-amber-400 rounded-full animate-pulse opacity-30"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${2 + Math.random() * 3}s`
+              left: particle.left,
+              top: particle.top,
+              animationDelay: particle.delay,
+              animationDuration: particle.duration
             }}
           />
         ))}
@@ -38,8 +47,8 @@ export default function Footer() {
               <div className="relative">
                 <div className="absolute inset-0 rounded-lg blur-lg animate-pulse" style={{ backgroundColor: '#f7931a33' }}></div>
                 <Image 
-                  src="/web-app-manifest-192x192.png" 
-                  alt="B4OS Logo" 
+                  src="https://res.cloudinary.com/dkuwkpihs/image/upload/v1758759628/web-app-manifest-192x192_dkecn9.png" 
+                  alt="B4OS Logo"
                   width={62} 
                   height={62} 
                   className="relative z-10 rounded-lg"

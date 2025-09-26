@@ -15,19 +15,6 @@ const colorClasses = {
 }
 
 export default function StatsCard({ title, value, icon: Icon, color }: StatsCardProps) {
-  const getEmoji = (title: string) => {
-    switch (title) {
-      case 'Estudiantes': return '👥'
-      case 'Habitantes de la Tierra Media': return '🏰'
-      case 'Challenges liberados': return '📚'
-      case 'Aventuras Épicas': return '⚔️'
-      case 'Challenges resueltos/en-progreso': return '🎓'
-      case 'Logros Conseguidos': return '🏆'
-      case 'Promedio': return '📊'
-      case 'Gloria del Reino': return '👑'
-      default: return '🎯'
-    }
-  }
 
   const getDescription = (title: string, value: string | number) => {
     switch (title) {
@@ -49,7 +36,6 @@ export default function StatsCard({ title, value, icon: Icon, color }: StatsCard
         <div className={`p-3 rounded-xl ${colorClasses[color].split(' ')[1]} shadow-sm`}>
           <Icon className={`h-6 w-6 ${colorClasses[color].split(' ')[0]}`} weight="duotone" />
         </div>
-        <span className="text-2xl">{getEmoji(title)}</span>
       </div>
       <div>
         <p className="text-sm font-semibold text-gray-600 mb-1">{title}</p>
