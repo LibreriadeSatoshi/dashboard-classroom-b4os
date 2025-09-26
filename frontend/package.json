@@ -9,8 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@auth/supabase-adapter": "^1.10.0",
     "@supabase/supabase-js": "^2.57.4",
     "next": "15.5.3",
+    "next-auth": "^4.24.11",
     "phosphor-react": "^1.4.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",

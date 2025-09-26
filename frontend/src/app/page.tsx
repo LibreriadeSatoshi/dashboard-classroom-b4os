@@ -3,15 +3,19 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { supabase, type Student, type Assignment, type ConsolidatedGrade } from '@/lib/supabase'
-import { Users, BookOpen, Medal, TrendUp, Crown, Sword, Shield } from 'phosphor-react'
+import { Users, Crown, Sword, Shield } from 'phosphor-react'
 import StatsCard from '@/components/StatsCard'
 import StudentsTable from '@/components/StudentsTable'
+import Header from '@/components/Header'
+import ProtectedRoute from '@/components/ProtectedRoute'
+import { useNamePreference } from '@/contexts/NamePreferenceContext'
 
 export default function Dashboard() {
   const [students, setStudents] = useState<Student[]>([])
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [grades, setGrades] = useState<ConsolidatedGrade[]>([])
   const [lastSync, setLastSync] = useState<string>('')
+  const { showRealName } = useNamePreference()
 
   // Fetch data from Supabase
   const fetchData = async () => {
@@ -71,7 +75,9 @@ export default function Dashboard() {
 
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white relative overflow-hidden">
+    <ProtectedRoute>
+      <Header />
+      <div className="min-h-screen bg-slate-900 text-white relative overflow-hidden">
       {/* Epic LOTR Background */}
       <div className="fixed inset-0 z-0">
         {/* Base gradient - Deep Middle-earth atmosphere */}
@@ -90,26 +96,53 @@ export default function Dashboard() {
         
         {/* Floating particles - like fireflies or magic */}
         <div className="absolute inset-0 overflow-hidden">
-          {Array.from({ length: 15 }).map((_, i) => (
+          {[
+            { left: '15%', top: '20%', delay: '0s', duration: '8s' },
+            { left: '35%', top: '60%', delay: '1s', duration: '7s' },
+            { left: '75%', top: '30%', delay: '2s', duration: '9s' },
+            { left: '60%', top: '80%', delay: '3s', duration: '6s' },
+            { left: '20%', top: '70%', delay: '4s', duration: '8s' },
+            { left: '80%', top: '15%', delay: '0.5s', duration: '7.5s' },
+            { left: '45%', top: '40%', delay: '1.5s', duration: '8.5s' },
+            { left: '90%', top: '55%', delay: '2.5s', duration: '6.5s' },
+            { left: '25%', top: '90%', delay: '3.5s', duration: '7.8s' },
+            { left: '65%', top: '10%', delay: '4.5s', duration: '9.2s' },
+            { left: '10%', top: '45%', delay: '0.8s', duration: '8.8s' },
+            { left: '85%', top: '75%', delay: '1.8s', duration: '7.2s' },
+            { left: '40%', top: '25%', delay: '2.8s', duration: '6.8s' },
+            { left: '70%', top: '65%', delay: '3.8s', duration: '9.5s' },
+            { left: '30%', top: '85%', delay: '4.8s', duration: '7.7s' }
+          ].map((particle, i) => (
             <div
               key={i}
               className="absolute w-1 h-1 bg-amber-400 rounded-full animate-drift opacity-60"
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 5}s`,
-                animationDuration: `${6 + Math.random() * 4}s`
+                left: particle.left,
+                top: particle.top,
+                animationDelay: particle.delay,
+                animationDuration: particle.duration
               }}
             />
           ))}
-          {Array.from({ length: 10 }).map((_, i) => (
+          {[
+            { left: '25%', top: '35%', delay: '0s' },
+            { left: '65%', top: '20%', delay: '1s' },
+            { left: '45%', top: '70%', delay: '2s' },
+            { left: '85%', top: '50%', delay: '3s' },
+            { left: '15%', top: '60%', delay: '0.5s' },
+            { left: '75%', top: '85%', delay: '1.5s' },
+            { left: '35%', top: '15%', delay: '2.5s' },
+            { left: '55%', top: '45%', delay: '3.5s' },
+            { left: '90%', top: '25%', delay: '1.2s' },
+            { left: '10%', top: '80%', delay: '2.7s' }
+          ].map((star, i) => (
             <div
               key={`star-${i}`}
               className="absolute w-2 h-2 bg-blue-300 rounded-full animate-glow-pulse opacity-40"
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 4}s`,
+                left: star.left,
+                top: star.top,
+                animationDelay: star.delay,
               }}
             />
           ))}
@@ -134,7 +167,7 @@ export default function Dashboard() {
       {/* Content overlay */}
       <div className="relative z-10">
         {/* Hero Section */}
-        <section className="py-16 relative">
+        <section className="py-18 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center justify-between bg-slate-800/40 backdrop-blur-lg rounded-3xl p-8 border border-slate-600/40 shadow-2xl relative overflow-hidden">
             {/* Subtle overlay to improve readability without blocking background */}
@@ -149,7 +182,7 @@ export default function Dashboard() {
                   <div className="absolute inset-0 bg-amber-400/50 rounded-full blur-xl animate-glow-pulse"></div>
                   <div className="absolute inset-0 bg-amber-300/30 rounded-full blur-lg animate-pulse" style={{animationDelay: '1s'}}></div>
                   <Image 
-                    src="/web-app-manifest-192x192.png" 
+                    src="https://res.cloudinary.com/dkuwkpihs/image/upload/v1758759628/web-app-manifest-192x192_dkecn9.png" 
                     alt="B4OS - Bitcoin 4 Open Source" 
                     width={96}
                     height={96}
@@ -204,7 +237,7 @@ export default function Dashboard() {
           </div>
         </div>
       </section>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatsCard
@@ -239,9 +272,11 @@ export default function Dashboard() {
           students={students}
           assignments={assignments}
           grades={grades}
+          showRealNames={showRealName}
         />
       </div>
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   )
 }

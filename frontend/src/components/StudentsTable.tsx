@@ -1,29 +1,104 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps */
 'use client'
 
-import { useState, useMemo } from 'react'
-import { type Student, type Assignment, type ConsolidatedGrade } from '@/lib/supabase'
-import { MagnifyingGlass, Funnel, Info, CaretUp, CaretDown, Eye, Crown } from 'phosphor-react'
-import { 
-  generateAnonymousId, 
-  findUserByRealUsername, 
+import { useState, useMemo, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
+import { type Student, type Assignment, type ConsolidatedGrade, supabase } from '@/lib/supabase'
+import { MagnifyingGlass, Funnel, CaretUp, CaretDown, Crown } from 'phosphor-react'
+import {
+  generateAnonymousId,
+  findUserByRealUsername,
   getAnonymousDescription
 } from '@/utils/anonymization'
 import LOTRAvatar from './LOTRAvatar'
+import { useNamePreference } from '@/contexts/NamePreferenceContext'
 
 interface StudentsTableProps {
   students: Student[]
   assignments: Assignment[]
   grades: ConsolidatedGrade[]
+  showRealNames?: boolean
 }
 
 type SortField = 'github_username' | 'assignment_name' | 'points_awarded' | 'points_available' | 'percentage'
 type SortDirection = 'asc' | 'desc'
 
-export default function StudentsTable({ assignments, grades }: StudentsTableProps) {
+export default function StudentsTable({ assignments, grades, showRealNames = false }: StudentsTableProps) {
+  const { data: session } = useSession()
+  const { showRealName } = useNamePreference() // Get current user's preference to trigger updates
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedAssignment, setSelectedAssignment] = useState('')
   const [sortField, setSortField] = useState<SortField>('github_username')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
+  const [userPreferences, setUserPreferences] = useState<Record<string, boolean>>({})
+
+  // Load all user preferences
+  useEffect(() => {
+    const loadAllUserPreferences = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('user_privacy')
+          .select('github_username, show_real_name')
+
+        if (error) {
+          console.error('Error loading user preferences:', error)
+          return
+        }
+
+        const preferences: Record<string, boolean> = {}
+        data?.forEach(pref => {
+          preferences[pref.github_username] = pref.show_real_name
+        })
+        setUserPreferences(preferences)
+      } catch (error) {
+        console.error('Error loading user preferences:', error)
+      }
+    }
+
+    loadAllUserPreferences()
+
+    // Listen for changes in user_privacy table
+    const channel = supabase
+      .channel('user_privacy_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'user_privacy' },
+        () => {
+          console.log('✅ User preferences change detected, reloading preferences...')
+          loadAllUserPreferences()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
+  // Also reload preferences when the current user's preference changes
+  useEffect(() => {
+    const loadAllUserPreferences = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('user_privacy')
+          .select('github_username, show_real_name')
+
+        if (error) {
+          console.error('Error loading user preferences:', error)
+          return
+        }
+
+        const preferences: Record<string, boolean> = {}
+        data?.forEach(pref => {
+          preferences[pref.github_username] = pref.show_real_name
+        })
+        setUserPreferences(preferences)
+      } catch (error) {
+        console.error('Error loading user preferences:', error)
+      }
+    }
+
+    loadAllUserPreferences()
+  }, [session?.user, showRealName]) // Reload when session or current user's preference changes
 
   // Calculate percentage
   const calculatePercentage = (pointsAwarded: number, pointsAvailable: number) => {
@@ -35,9 +110,41 @@ export default function StudentsTable({ assignments, grades }: StudentsTableProp
     return 0
   }
 
+  // Function to determine what name to display
+  const getDisplayName = (githubUsername: string) => {
+    // Check if this user has chosen to show their real name
+    const userWantsToShowRealName = userPreferences[githubUsername] || false
+    
+    // If the user chose to show their real name, show it to everyone
+    if (userWantsToShowRealName) {
+      return githubUsername
+    }
+
+    // Otherwise show anonymous ID
+    return generateAnonymousId(githubUsername)
+  }
+
+  // Function to get display description
+  const getDisplayDescription = (githubUsername: string) => {
+    // Check if this user has chosen to show their real name
+    const userWantsToShowRealName = userPreferences[githubUsername] || false
+    
+    // If the user chose to show their real name, show GitHub info to everyone
+    if (userWantsToShowRealName) {
+      return `GitHub: @${githubUsername}`
+    }
+
+    // Otherwise show anonymous description
+    const anonymousId = generateAnonymousId(githubUsername)
+    return getAnonymousDescription(anonymousId)
+  }
+
   // Check if search term matches a real username (exact match for self-identification)
   const searchedUserInfo = useMemo(() => {
     if (!searchTerm) return null
+    
+    const currentUserRole = (session?.user as any)?.role
+    const currentUserUsername = (session?.user as any)?.githubUsername
     
     // First check for exact match (for self-identification feature)
     const allUsernames = grades.map(g => g.github_username)
@@ -46,6 +153,11 @@ export default function StudentsTable({ assignments, grades }: StudentsTableProp
     )
     
     if (exactMatch) {
+      // If user is dev, only allow searching for their own username
+      if (currentUserRole === 'dev' && exactMatch !== currentUserUsername) {
+        return null // Don't allow devs to search for other users' real usernames
+      }
+      
       const result = findUserByRealUsername(exactMatch, allUsernames)
       return result.found ? {
         realUsername: exactMatch,
@@ -54,7 +166,7 @@ export default function StudentsTable({ assignments, grades }: StudentsTableProp
     }
     
     return null
-  }, [searchTerm, grades])
+  }, [searchTerm, grades, session])
 
   // Filter and sort data
   const filteredAndSortedGrades = useMemo(() => {
@@ -64,12 +176,19 @@ export default function StudentsTable({ assignments, grades }: StudentsTableProp
     if (searchTerm) {
       filtered = filtered.filter(grade => {
         const anonymousId = generateAnonymousId(grade.github_username)
+        const currentUserRole = (session?.user as any)?.role || 'dev'
+        const currentUserUsername = (session?.user as any)?.githubUsername
+        
+        // Check if this user has chosen to show their real name
+        const userWantsToShowRealName = userPreferences[grade.github_username] || false
+        
         return (
-          // Search by anonymous ID
+          // Search by anonymous ID (always allowed)
           anonymousId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          // Search by assignment name
+          // Search by assignment name (always allowed)
           grade.assignment_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          // Search by real username (partial match)
+          // Search by real username (if user chose to show it OR if admin or searching for own username)
+          (userWantsToShowRealName || currentUserRole === 'administrator' || grade.github_username === currentUserUsername) &&
           grade.github_username.toLowerCase().includes(searchTerm.toLowerCase())
         )
       })
@@ -190,7 +309,11 @@ export default function StudentsTable({ assignments, grades }: StudentsTableProp
               />
               <input
                 type="text"
-                placeholder="Busca por tu username real de GitHub o por nombre anónimo..."
+                placeholder={
+                  (session?.user as any)?.role === 'dev' 
+                    ? "Busca por nombre anónimo, tu username, o nombres revelados..." 
+                    : "Busca por username de GitHub, nombres anónimos, o nombres revelados..."
+                }
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200"
@@ -215,6 +338,7 @@ export default function StudentsTable({ assignments, grades }: StudentsTableProp
             </div>
           </div>
         </div>
+
       </div>
 
       {/* Table */}
@@ -273,9 +397,10 @@ export default function StudentsTable({ assignments, grades }: StudentsTableProp
           <tbody className="divide-y divide-gray-200">
             {filteredAndSortedGrades.map((grade, index) => {
               const percentage = calculatePercentage(grade.points_awarded || 0, grade.points_available || 0)
-              const anonymousId = generateAnonymousId(grade.github_username)
-              const description = getAnonymousDescription(anonymousId)
+              const displayName = getDisplayName(grade.github_username)
+              const description = getDisplayDescription(grade.github_username)
               const isSearchedUser = searchedUserInfo?.realUsername.toLowerCase() === grade.github_username.toLowerCase()
+              const isCurrentUser = (session?.user as any)?.githubUsername === grade.github_username
               
               return (
                 <tr 
@@ -296,7 +421,7 @@ export default function StudentsTable({ assignments, grades }: StudentsTableProp
                       <div className="ml-3">
                         <div className="flex items-center gap-2">
                           <div className="text-sm font-medium text-gray-900">
-                            {anonymousId}
+                            {displayName}
                           </div>
                           {isSearchedUser && (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
@@ -354,14 +479,10 @@ export default function StudentsTable({ assignments, grades }: StudentsTableProp
 
        {/* Footer */}
        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-xl">
-         <div className="flex items-center justify-between text-sm text-gray-600">
+         <div className="flex items-center justify-center text-sm text-gray-600">
            <span>
              Mostrando {filteredAndSortedGrades.length} de {grades.length} registros
            </span>
-           <div className="flex items-center gap-4">
-             <span>Ordenar por: {sortField}</span>
-             <span>Dirección: {sortDirection === 'asc' ? 'Ascendente' : 'Descendente'}</span>
-           </div>
          </div>
        </div>
     </div>
