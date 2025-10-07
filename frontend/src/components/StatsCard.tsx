@@ -1,10 +1,14 @@
+'use client'
+
 import { Icon } from 'phosphor-react'
+import { useTranslations } from 'next-intl'
 
 interface StatsCardProps {
   title: string
   value: string | number
   icon: Icon
   color: 'blue' | 'green' | 'purple' | 'orange'
+  descriptionKey: 'students' | 'inhabitants' | 'missions' | 'challenges' | 'kingdomGlory'
 }
 
 const colorClasses = {
@@ -14,19 +18,26 @@ const colorClasses = {
   orange: 'text-gray-600 bg-gray-100'
 }
 
-export default function StatsCard({ title, value, icon: Icon, color }: StatsCardProps) {
+export default function StatsCard({ title, value, icon: Icon, color, descriptionKey }: StatsCardProps) {
+  const t = useTranslations('stats')
 
-  const getDescription = (title: string, value: string | number) => {
-    switch (title) {
-      case 'Estudiantes': return `${value} desarrolladores en formación`
-      case 'Habitantes de la Tierra Media': return `${value} aventurero${value !== 1 ? 's' : ''} en el reino`
-      case 'Challenges liberados': return `${value} challenge${value !== 1 ? 's' : ''} activo${value !== 1 ? 's' : ''}`
-      case 'Aventuras Épicas': return `${value} misión${value !== 1 ? 'es' : ''} disponible${value !== 1 ? 's' : ''}`
-      case 'Challenges resueltos/en-progreso': return `${value} evaluación${value !== 1 ? 'es' : ''} completada${value !== 1 ? 's' : ''}`
-      case 'Logros Conseguidos': return `${value} hazaña${value !== 1 ? 's' : ''} completada${value !== 1 ? 's' : ''}`
-      case 'Promedio': return `Rendimiento general del curso`
-      case 'Gloria del Reino': return `Honor y prestigio del reino`
-      default: return 'Métrica del sistema'
+  const getDescription = (key: string, value: string | number) => {
+    const numValue = typeof value === 'string' ? parseInt(value) || 0 : value
+    const isPlural = numValue !== 1
+
+    switch (key) {
+      case 'students':
+        return `${value} ${isPlural ? t('studentsDescPlural') : t('studentsDesc')}`
+      case 'inhabitants':
+        return `${value} ${isPlural ? t('inhabitantsDescPlural') : t('inhabitantsDesc')}`
+      case 'missions':
+        return `${value} ${isPlural ? t('missionsDescPlural') : t('missionsDesc')}`
+      case 'challenges':
+        return `${value} ${isPlural ? t('challengesDescPlural') : t('challengesDesc')}`
+      case 'kingdomGlory':
+        return t('kingdomGloryDesc')
+      default:
+        return t('systemMetricsDesc')
     }
   }
 
@@ -40,7 +51,7 @@ export default function StatsCard({ title, value, icon: Icon, color }: StatsCard
       <div>
         <p className="text-sm font-semibold text-gray-600 mb-1">{title}</p>
         <p className="text-3xl font-bold text-gray-900 mb-2">{value}</p>
-        <p className="text-xs text-gray-500 leading-relaxed">{getDescription(title, value)}</p>
+        <p className="text-xs text-gray-500 leading-relaxed">{getDescription(descriptionKey, value)}</p>
       </div>
     </div>
   )

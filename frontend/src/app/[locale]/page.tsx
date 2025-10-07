@@ -9,6 +9,7 @@ import StudentsTable from '@/components/StudentsTable'
 import Header from '@/components/Header'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { useNamePreference } from '@/contexts/NamePreferenceContext'
+import { useTranslations } from 'next-intl'
 
 export default function Dashboard() {
   const [students, setStudents] = useState<Student[]>([])
@@ -16,6 +17,8 @@ export default function Dashboard() {
   const [grades, setGrades] = useState<ConsolidatedGrade[]>([])
   const [lastSync, setLastSync] = useState<string>('')
   const { showRealName } = useNamePreference()
+  const t = useTranslations('dashboard')
+  const tc = useTranslations('common')
 
   // Fetch data from Supabase
   const fetchData = async () => {
@@ -194,16 +197,16 @@ export default function Dashboard() {
                 <div className="flex items-center gap-3">
                   <Crown className="h-7 w-7 text-amber-400 drop-shadow-lg animate-glow-pulse" />
                   <h1 className="text-3xl font-bold text-amber-200 drop-shadow-xl relative epic-title">
-                    <span className="absolute inset-0 text-amber-500 blur-sm opacity-40">Consejo de la Tierra Media</span>
-                    <span className="relative font-bold">Consejo de la Tierra Media</span>
+                    <span className="absolute inset-0 text-amber-500 blur-sm opacity-40">{t('title')}</span>
+                    <span className="relative font-bold">{t('title')}</span>
                   </h1>
                 </div>
               </div>
-              <p className="text-xl text-slate-300 mb-4 font-medium">Dashboard de Aventuras y Logros del Reino</p>
+              <p className="text-xl text-slate-300 mb-4 font-medium">{tc('dashboard')} {t('subtitle')}</p>
               <div className="flex flex-wrap justify-center lg:justify-start gap-4 text-sm text-slate-400">
                 <span className="flex items-center bg-slate-800/50 px-3 py-2 rounded-lg border border-slate-700/50 backdrop-blur-sm">
                   <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
-                  Última sync: {lastSync || 'Nunca'}
+                  {t('lastSync')}: {lastSync || t('never')}
                 </span>
               </div>
             </div>
@@ -216,19 +219,19 @@ export default function Dashboard() {
               <div className="relative z-10">
                 <h4 className="text-white font-bold text-xl mb-6 flex items-center gap-3">
                   <Shield className="h-7 w-7 text-amber-400 drop-shadow-lg" />
-                  <span className="text-amber-200 kingdom-text drop-shadow-lg">Estado del Reino</span>
+                  <span className="text-amber-200 kingdom-text drop-shadow-lg">{t('kingdomStatus')}</span>
                 </h4>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center py-4 px-5 bg-slate-700/60 rounded-xl border border-slate-500/40 backdrop-blur-sm hover:bg-slate-600/60 transition-all duration-300 shadow-lg">
-                    <span className="text-slate-100 font-semibold">Habitantes activos:</span>
+                    <span className="text-slate-100 font-semibold">{t('activeInhabitants')}:</span>
                     <span className="text-amber-300 font-bold text-2xl ml-4 drop-shadow-lg">{stats.totalStudents}</span>
                   </div>
                   <div className="flex justify-between items-center py-4 px-5 bg-slate-700/60 rounded-xl border border-slate-500/40 backdrop-blur-sm hover:bg-slate-600/60 transition-all duration-300 shadow-lg">
-                    <span className="text-slate-100 font-semibold">Aventuras disponibles:</span>
+                    <span className="text-slate-100 font-semibold">{t('availableAdventures')}:</span>
                     <span className="text-blue-300 font-bold text-2xl ml-4 drop-shadow-lg">{stats.totalAssignments}</span>
                   </div>
                   <div className="flex justify-between items-center py-4 px-5 bg-slate-700/60 rounded-xl border border-slate-500/40 backdrop-blur-sm hover:bg-slate-600/60 transition-all duration-300 shadow-lg">
-                    <span className="text-slate-100 font-semibold">Aventuras aceptadas:</span>
+                    <span className="text-slate-100 font-semibold">{t('acceptedAdventures')}:</span>
                     <span className="text-green-300 font-bold text-2xl ml-4 drop-shadow-lg">{stats.totalGrades}</span>
                   </div>
                 </div>
@@ -241,28 +244,32 @@ export default function Dashboard() {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatsCard
-            title="Habitantes de la Tierra Media"
+            title={`${tc('students')} ${t('middleEarthInhabitants')}`}
             value={stats.totalStudents}
             icon={Users}
             color="blue"
+            descriptionKey="inhabitants"
           />
           <StatsCard
-            title="Aventuras Épicas"
+            title={t('epicAdventures')}
             value={stats.totalAssignments}
             icon={Sword}
             color="green"
+            descriptionKey="missions"
           />
           <StatsCard
-            title="Desafíos Aceptados/En-Progreso"
+            title={t('acceptedChallenges')}
             value={stats.totalGrades}
             icon={Shield}
             color="purple"
+            descriptionKey="challenges"
           />
           <StatsCard
-            title="Gloria del Reino"
+            title={t('kingdomGlory')}
             value={`${stats.averageGrade}%`}
             icon={Crown}
             color="orange"
+            descriptionKey="kingdomGlory"
           />
         </div>
 

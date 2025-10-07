@@ -1,0 +1,65 @@
+{
+  "common": {
+    "welcome": "Welcome",
+    "dashboard": "Dashboard",
+    "students": "Students",
+    "grades": "Grades",
+    "settings": "Settings",
+    "language": "Language",
+    "admin": "admin",
+    "dev": "dev"
+  },
+  "dashboard": {
+    "title": "Middle-earth Council",
+    "subtitle": "of Kingdom Adventures and Achievements",
+    "lastSync": "Last sync",
+    "never": "Never",
+    "kingdomStatus": "Kingdom Status",
+    "activeInhabitants": "Active inhabitants",
+    "availableAdventures": "Available adventures",
+    "acceptedAdventures": "Accepted adventures",
+    "middleEarthInhabitants": "of Middle-earth",
+    "epicAdventures": "Epic Adventures",
+    "acceptedChallenges": "Accepted/In-Progress Challenges",
+    "kingdomGlory": "Kingdom Glory"
+  },
+  "stats": {
+    "studentsDesc": "developer in training",
+    "studentsDescPlural": "developers in training",
+    "inhabitantsDesc": "adventurer in the kingdom",
+    "inhabitantsDescPlural": "adventurers in the kingdom",
+    "missionsDesc": "mission available",
+    "missionsDescPlural": "missions available",
+    "challengesDesc": "evaluation completed",
+    "challengesDescPlural": "evaluations completed",
+    "kingdomGloryDesc": "Honor and prestige of the kingdom",
+    "systemMetricsDesc": "System metric"
+  },
+  "table": {
+    "title": "Middle-earth Inhabitants",
+    "identityRevealed": "Identity Revealed!",
+    "yourSecretIdentity": "Your secret identity in Middle-earth is:",
+    "onlyYouCanSee": "Only you can see this message",
+    "searchPlaceholderDev": "Search by anonymous name, your username, or revealed names...",
+    "searchPlaceholderAdmin": "Search by GitHub username, anonymous names, or revealed names...",
+    "allAdventures": "All adventures",
+    "inhabitant": "Middle-earth Inhabitant",
+    "challenge": "Challenge",
+    "pointsAwarded": "Points Awarded",
+    "pointsAvailable": "Points Available",
+    "percentage": "Percentage",
+    "itsYou": "It's you!",
+    "showing": "Showing",
+    "of": "of",
+    "records": "records",
+    "points": "pts"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "signUp": "Sign Up",
+    "namePreference": "Name Preference",
+    "realName": "Real name",
+    "anonymousIdentity": "Anonymous identity"
+  }
+}

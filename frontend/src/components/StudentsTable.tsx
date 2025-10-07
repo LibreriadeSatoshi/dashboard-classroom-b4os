@@ -12,6 +12,7 @@ import {
 } from '@/utils/anonymization'
 import LOTRAvatar from './LOTRAvatar'
 import { useNamePreference } from '@/contexts/NamePreferenceContext'
+import { useTranslations } from 'next-intl'
 
 interface StudentsTableProps {
   students: Student[]
@@ -26,6 +27,7 @@ type SortDirection = 'asc' | 'desc'
 export default function StudentsTable({ assignments, grades, showRealNames = false }: StudentsTableProps) {
   const { data: session } = useSession()
   const { showRealName } = useNamePreference() // Get current user's preference to trigger updates
+  const t = useTranslations('table')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedAssignment, setSelectedAssignment] = useState('')
   const [sortField, setSortField] = useState<SortField>('github_username')
@@ -273,9 +275,9 @@ export default function StudentsTable({ assignments, grades, showRealNames = fal
         <div className="flex flex-col gap-4">
           <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 epic-title">
             <Crown size={24} className="text-amber-600" />
-            Habitantes de la Tierra Media
+            {t('title')}
           </h2>
-          
+
           {/* Search result indicator */}
           {searchedUserInfo && (
             <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3 shadow-sm">
@@ -284,16 +286,16 @@ export default function StudentsTable({ assignments, grades, showRealNames = fal
               </div>
               <div>
                 <div className="text-sm font-semibold text-amber-900 mb-1">
-                  🎯 ¡Identidad Revelada!
+                  🎯 {t('identityRevealed')}
                 </div>
                 <div className="text-sm text-amber-800">
-                  Tu identidad secreta en la Tierra Media es: 
+                  {t('yourSecretIdentity')}
                   <span className="font-bold text-amber-900 ml-1 px-2 py-1 bg-amber-100 rounded">
                     {searchedUserInfo.anonymousId}
                   </span>
                 </div>
                 <div className="text-xs text-amber-700 mt-1 italic">
-                  Solo tú puedes ver este mensaje
+                  {t('onlyYouCanSee')}
                 </div>
               </div>
             </div>
@@ -310,9 +312,9 @@ export default function StudentsTable({ assignments, grades, showRealNames = fal
               <input
                 type="text"
                 placeholder={
-                  (session?.user as any)?.role === 'dev' 
-                    ? "Busca por nombre anónimo, tu username, o nombres revelados..." 
-                    : "Busca por username de GitHub, nombres anónimos, o nombres revelados..."
+                  (session?.user as any)?.role === 'dev'
+                    ? t('searchPlaceholderDev')
+                    : t('searchPlaceholderAdmin')
                 }
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -328,10 +330,10 @@ export default function StudentsTable({ assignments, grades, showRealNames = fal
                 onChange={(e) => setSelectedAssignment(e.target.value)}
                 className="pl-10 pr-8 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 appearance-none min-w-[200px] transition-all duration-200"
               >
-                <option value="">Todas las aventuras</option>
+                <option value="">{t('allAdventures')}</option>
                 {assignments.map(assignment => (
                   <option key={assignment.id} value={assignment.name}>
-                    {assignment.name} ({assignment.points_available} pts)
+                    {assignment.name} ({assignment.points_available} {t('points')})
                   </option>
                 ))}
               </select>
@@ -346,49 +348,49 @@ export default function StudentsTable({ assignments, grades, showRealNames = fal
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('github_username')}
               >
                 <div className="flex items-center gap-2">
                   <Crown className="h-4 w-4 text-amber-500" />
-                  Habitante de la Tierra Media
+                  {t('inhabitant')}
                   {getSortIcon('github_username')}
                 </div>
               </th>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('assignment_name')}
               >
                 <div className="flex items-center gap-2">
-                  Challenge
+                  {t('challenge')}
                   {getSortIcon('assignment_name')}
                 </div>
               </th>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('points_awarded')}
               >
                 <div className="flex items-center gap-2">
-                  Puntos Obtenidos
+                  {t('pointsAwarded')}
                   {getSortIcon('points_awarded')}
                 </div>
               </th>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('points_available')}
               >
                 <div className="flex items-center gap-2">
-                  Puntos Disponibles
+                  {t('pointsAvailable')}
                   {getSortIcon('points_available')}
                 </div>
               </th>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('percentage')}
               >
                 <div className="flex items-center gap-2">
-                  Porcentaje
+                  {t('percentage')}
                   {getSortIcon('percentage')}
                 </div>
               </th>
@@ -426,7 +428,7 @@ export default function StudentsTable({ assignments, grades, showRealNames = fal
                           {isSearchedUser && (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
                               <Crown className="h-3 w-3 mr-1" />
-                              ¡Eres tú!
+                              {t('itsYou')}
                             </span>
                           )}
                         </div>
@@ -481,7 +483,7 @@ export default function StudentsTable({ assignments, grades, showRealNames = fal
        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-xl">
          <div className="flex items-center justify-center text-sm text-gray-600">
            <span>
-             Mostrando {filteredAndSortedGrades.length} de {grades.length} registros
+             {t('showing')} {filteredAndSortedGrades.length} {t('of')} {grades.length} {t('records')}
            </span>
          </div>
        </div>

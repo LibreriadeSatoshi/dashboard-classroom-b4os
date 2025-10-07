@@ -1,0 +1,65 @@
+{
+  "common": {
+    "welcome": "Bienvenido",
+    "dashboard": "Panel de Control",
+    "students": "Estudiantes",
+    "grades": "Calificaciones",
+    "settings": "Configuración",
+    "language": "Idioma",
+    "admin": "admin",
+    "dev": "dev"
+  },
+  "dashboard": {
+    "title": "Consejo de la Tierra Media",
+    "subtitle": "de Aventuras y Logros del Reino",
+    "lastSync": "Última sync",
+    "never": "Nunca",
+    "kingdomStatus": "Estado del Reino",
+    "activeInhabitants": "Habitantes activos",
+    "availableAdventures": "Aventuras disponibles",
+    "acceptedAdventures": "Aventuras aceptadas",
+    "middleEarthInhabitants": "Estudiantes de la Tierra Media",
+    "epicAdventures": "Aventuras Épicas",
+    "acceptedChallenges": "Desafíos Aceptados/En-Progreso",
+    "kingdomGlory": "Gloria del Reino"
+  },
+  "stats": {
+    "studentsDesc": "desarrolladores en formación",
+    "studentsDescPlural": "desarrolladores en formación",
+    "inhabitantsDesc": "aventurero en el reino",
+    "inhabitantsDescPlural": "aventureros en el reino",
+    "missionsDesc": "misión disponible",
+    "missionsDescPlural": "misiones disponibles",
+    "challengesDesc": "evaluación completada",
+    "challengesDescPlural": "evaluaciones completadas",
+    "kingdomGloryDesc": "Honor y prestigio del reino",
+    "systemMetricsDesc": "Métrica del sistema"
+  },
+  "table": {
+    "title": "Habitantes de la Tierra Media",
+    "identityRevealed": "¡Identidad Revelada!",
+    "yourSecretIdentity": "Tu identidad secreta en la Tierra Media es:",
+    "onlyYouCanSee": "Solo tú puedes ver este mensaje",
+    "searchPlaceholderDev": "Busca por nombre anónimo, tu username, o nombres revelados...",
+    "searchPlaceholderAdmin": "Busca por username de GitHub, nombres anónimos, o nombres revelados...",
+    "allAdventures": "Todas las aventuras",
+    "inhabitant": "Habitante de la Tierra Media",
+    "challenge": "Challenge",
+    "pointsAwarded": "Puntos Obtenidos",
+    "pointsAvailable": "Puntos Disponibles",
+    "percentage": "Porcentaje",
+    "itsYou": "¡Eres tú!",
+    "showing": "Mostrando",
+    "of": "de",
+    "records": "registros",
+    "points": "pts"
+  },
+  "auth": {
+    "signIn": "Iniciar Sesión",
+    "signOut": "Cerrar Sesión",
+    "signUp": "Registrarse",
+    "namePreference": "Preferencia de Nombre",
+    "realName": "Nombre real",
+    "anonymousIdentity": "Identidad anónima"
+  }
+}

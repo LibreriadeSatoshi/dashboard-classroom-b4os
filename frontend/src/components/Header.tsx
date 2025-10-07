@@ -6,11 +6,15 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { CaretDown, SignOut, Crown, Eye, EyeSlash, Sword } from 'phosphor-react'
 import { useNamePreference } from '@/contexts/NamePreferenceContext'
+import { useTranslations } from 'next-intl'
+import LanguageSwitcher from './LanguageSwitcher'
 
 export default function Header() {
   const { data: session } = useSession()
   const [showDropdown, setShowDropdown] = useState(false)
   const { showRealName, setShowRealName, loading } = useNamePreference()
+  const t = useTranslations('auth')
+  const tc = useTranslations('common')
 
   if (!session) return null
 
@@ -34,7 +38,10 @@ export default function Header() {
   return (
     <header className="absolute top-0 left-0 right-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-end h-16">
+        <div className="flex items-center justify-end gap-4 h-16">
+          {/* Language Switcher */}
+          <LanguageSwitcher />
+
           {/* User Menu */}
           <div className="relative">
             <button
@@ -101,7 +108,7 @@ export default function Header() {
                     {/* Role Badge */}
                     <div className="mb-4">
                       <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border ${getRoleBadgeColor((session.user as any)?.role || 'dev')}`}>
-                        {(session.user as any)?.role === 'administrator' ? 'admin' : 'dev'}
+                        {(session.user as any)?.role === 'administrator' ? tc('admin') : tc('dev')}
                       </div>
                     </div>
 
@@ -117,10 +124,10 @@ export default function Header() {
                             )}
                             <div>
                               <div className="text-sm font-medium text-gray-900">
-                                Preferencia de Nombre
+                                {t('namePreference')}
                               </div>
                               <div className="text-xs text-gray-500">
-                                {showRealName ? 'Nombre real' : 'Identidad anónima'}
+                                {showRealName ? t('realName') : t('anonymousIdentity')}
                               </div>
                             </div>
                           </div>
@@ -152,7 +159,7 @@ export default function Header() {
                       className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
                     >
                       <SignOut size={16} />
-                      Cerrar Sesión
+                      {t('signOut')}
                     </button>
                   </div>
                 </div>
