@@ -6,7 +6,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { CaretDown, SignOut, Crown, Eye, EyeSlash, Sword } from 'phosphor-react'
 import { useNamePreference } from '@/contexts/NamePreferenceContext'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import LanguageSwitcher from './LanguageSwitcher'
 
 export default function Header() {
@@ -15,11 +15,12 @@ export default function Header() {
   const { showRealName, setShowRealName, loading } = useNamePreference()
   const t = useTranslations('auth')
   const tc = useTranslations('common')
+  const locale = useLocale()
 
   if (!session) return null
 
   const handleSignOut = () => {
-    signOut({ callbackUrl: '/auth/signin' })
+    signOut({ callbackUrl: `/${locale}/auth/signin` })
   }
 
   const getRoleBadgeColor = (role: string) => {
