@@ -52,8 +52,14 @@ SUPABASE_URL=https://tu-proyecto.supabase.co
 SUPABASE_KEY=tu_clave_anon_aqui
 
 # Frontend (.env.local)
-NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_clave_anon_aqui
+# IMPORTANTE: NO usar prefijo NEXT_PUBLIC_ para evitar exposición de credenciales
+# Estas variables solo se usan en rutas de API del servidor
+SUPABASE_URL=https://tu-proyecto.supabase.co
+SUPABASE_ANON_KEY=tu_clave_anon_aqui
+GITHUB_CLIENT_ID=tu_github_client_id
+GITHUB_CLIENT_SECRET=tu_github_client_secret
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=tu_nextauth_secret
 ```
 
 ### Base de Datos
