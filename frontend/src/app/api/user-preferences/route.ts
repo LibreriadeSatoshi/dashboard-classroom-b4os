@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
+import type { Session } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { createClient } from '@supabase/supabase-js'
 
@@ -11,7 +12,7 @@ const supabase = createClient(
 // GET: Fetch all users' privacy preferences
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
+    const session: Session | null = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

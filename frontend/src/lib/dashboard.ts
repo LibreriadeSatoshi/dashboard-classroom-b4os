@@ -1,4 +1,5 @@
 import { getServerSession } from 'next-auth/next'
+import type { Session } from 'next-auth'
 import { createClient } from '@supabase/supabase-js'
 import { authOptions } from './auth-config'
 import type { Student, Assignment, ConsolidatedGrade } from './supabase'
@@ -97,7 +98,7 @@ async function getAnonymizedLeaderboard(currentUsername?: string): Promise<Dashb
 
 // Main function to get dashboard data based on user role
 export async function getDashboardData(): Promise<DashboardData> {
-  const session = await getServerSession(authOptions)
+  const session: Session | null = await getServerSession(authOptions)
   
   if (!session?.user) {
     throw new Error('Unauthorized')
