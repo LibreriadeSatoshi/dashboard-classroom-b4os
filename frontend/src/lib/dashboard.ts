@@ -53,7 +53,7 @@ async function getFullLeaderboard(): Promise<DashboardData> {
   }
 }
 
-// Helper function to get anonymized leaderboard (students only see their own data)
+// Helper function to get leaderboard for students (all grades visible, feedback based on privacy)
 async function getAnonymizedLeaderboard(currentUsername?: string): Promise<DashboardData> {
   if (!currentUsername) {
     return {
@@ -64,26 +64,22 @@ async function getAnonymizedLeaderboard(currentUsername?: string): Promise<Dashb
     }
   }
 
-  // Fetch all data in parallel
-  const [assignmentsResult, gradesResult, studentResult, feedbackResult] = await Promise.all([
-    // Get assignments (students can see all assignments)
+  // Fetch all data in parallel (students see full leaderboard)
+  const [studentsResult, assignmentsResult, gradesResult, privacyResult] = await Promise.all([
+    // Get ALL students for leaderboard
+    supabase.from('students').select('*').order('github_username'),
+    // Get ALL assignments
     supabase.from('assignments').select('*').order('name'),
-    // Get only the current user's grades
-    supabase.from('consolidated_grades')
-      .select('*')
-      .eq('github_username', currentUsername)
-      .order('assignment_name'),
-    // Get only the current user's student record
-    supabase.from('students')
-      .select('*')
-      .eq('github_username', currentUsername)
-      .single(),
-    // Get feedback for the current user
-    supabase.from('student_reviewers')
-      .select('id, student_username, reviewer_username, assignment_name, feedback_for_student, status, completed_at')
-      .eq('student_username', currentUsername)
-      .not('feedback_for_student', 'is', null)
+    // Get ALL grades for leaderboard
+    supabase.from('consolidated_grades').select('*').order('github_username'),
+    // Get privacy preferences to filter feedback visibility
+    supabase.from('user_privacy').select('github_username, show_real_name')
   ])
+
+  if (studentsResult.error) {
+    console.error('Error fetching students:', studentsResult.error)
+    throw studentsResult.error
+  }
 
   if (assignmentsResult.error) {
     console.error('Error fetching assignments:', assignmentsResult.error)
@@ -95,21 +91,35 @@ async function getAnonymizedLeaderboard(currentUsername?: string): Promise<Dashb
     throw gradesResult.error
   }
 
-  if (studentResult.error && studentResult.error.code !== 'PGRST116') {
-    console.error('Error fetching student:', studentResult.error)
-    throw studentResult.error
+  // Build set of usernames with show_real_name = true (revealed identity)
+  const revealedUsernames = new Set<string>()
+  if (!privacyResult.error && privacyResult.data) {
+    for (const pref of privacyResult.data) {
+      if (pref.show_real_name) {
+        revealedUsernames.add(pref.github_username)
+      }
+    }
   }
 
-  if (feedbackResult.error) {
-    console.error('Error fetching feedback:', feedbackResult.error)
-    // Don't throw - feedback is optional
+  // Fetch feedback: own feedback + feedback from users who revealed their identity
+  const feedbackResult = await supabase
+    .from('student_reviewers')
+    .select('id, student_username, reviewer_username, assignment_name, feedback_for_student, status, completed_at')
+    .not('feedback_for_student', 'is', null)
+
+  let filteredFeedback: StudentFeedback[] = []
+  if (!feedbackResult.error && feedbackResult.data) {
+    // Filter: show own feedback OR feedback of users who revealed identity
+    filteredFeedback = feedbackResult.data.filter(fb =>
+      fb.student_username === currentUsername || revealedUsernames.has(fb.student_username)
+    )
   }
 
   return {
-    students: studentResult.data ? [studentResult.data] : [],
+    students: studentsResult.data || [],
     assignments: assignmentsResult.data || [],
     grades: gradesResult.data || [],
-    feedback: feedbackResult.data || []
+    feedback: filteredFeedback
   }
 }
 
