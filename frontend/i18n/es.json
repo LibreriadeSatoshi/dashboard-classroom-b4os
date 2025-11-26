@@ -20,7 +20,7 @@
     "acceptedAdventures": "Aventuras aceptadas",
     "middleEarthInhabitants": "Estudiantes de la Tierra Media",
     "epicAdventures": "Aventuras Épicas",
-    "acceptedChallenges": "Desafíos Aceptados/En-Progreso",
+    "acceptedChallenges": "Aventuras Aceptadas",
     "kingdomGlory": "Gloria del Reino"
   },
   "stats": {
@@ -30,8 +30,8 @@
     "inhabitantsDescPlural": "aventureros en el reino",
     "missionsDesc": "misión disponible",
     "missionsDescPlural": "misiones disponibles",
-    "challengesDesc": "evaluación completada",
-    "challengesDescPlural": "evaluaciones completadas",
+    "challengesDesc": "aventura aceptada",
+    "challengesDescPlural": "aventuras aceptadas",
     "kingdomGloryDesc": "Honor y prestigio del reino",
     "systemMetricsDesc": "Métrica del sistema"
   },
@@ -44,7 +44,7 @@
     "searchPlaceholderAdmin": "Busca por username de GitHub, nombres anónimos, o nombres revelados...",
     "allAdventures": "Todas las aventuras",
     "inhabitant": "Habitante de la Tierra Media",
-    "challenge": "Challenge",
+    "challenge": "Aventura",
     "pointsAwarded": "Puntos Obtenidos",
     "pointsAvailable": "Puntos Disponibles",
     "percentage": "Porcentaje",
@@ -63,5 +63,11 @@
     "namePreference": "Preferencia de Nombre",
     "realName": "Nombre real",
     "anonymousIdentity": "Identidad anónima"
+  },
+  "footer": {
+    "program": "Programa gratuito de entrenamiento técnico en Bitcoin para desarrolladores.",
+    "made": "Hecho con",
+    "made-continue": "para la comunidad Bitcoin",
+    "contact": "Contacto B4OS"
   }
 }

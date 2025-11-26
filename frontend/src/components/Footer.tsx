@@ -1,10 +1,13 @@
 'use client'
 
 import { Heart, GithubLogo, TwitterLogo, LinkedinLogo, Envelope, DiscordLogo, FacebookLogo } from 'phosphor-react'
+import { useTranslations } from 'next-intl'
 import Image from 'next/image'
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
+  const t = useTranslations('footer')
+
 
   return (
     <footer className="relative bg-slate-900 border-t border-slate-700/50 overflow-hidden">
@@ -56,13 +59,13 @@ export default function Footer() {
               </div>            </div>
             <p className="text-slate-300 text-sm leading-relaxed max-w-md">
               <strong style={{ color: '#f7931a' }}>Bitcoin 4 Open Source</strong> - 
-              Programa gratuito de entrenamiento técnico en Bitcoin para desarrolladores.
+              {t('program')}
             </p>
           </div>
 
           {/* Contacto */}
           <div className="space-y-3">
-            <h4 className="text-lg font-semibold kingdom-text" style={{ color: '#f7931a' }}>Contacto B4OS</h4>
+            <h4 className="text-lg font-semibold kingdom-text" style={{ color: '#f7931a' }}>{t('contact')}</h4>
             <div className="space-y-3">
               <a 
                 href="mailto:hola@b4os.dev"
@@ -133,9 +136,9 @@ export default function Footer() {
               <span>(Bitcoin 4 Open Source)</span>
             </div>
             <div className="flex items-center gap-2 text-slate-400 text-sm">
-              <span>Hecho con</span>
+              <span>{t('made')}</span>
               <Heart className="h-4 w-4 text-red-400 animate-pulse" weight="fill" />
-              <span>para la comunidad Bitcoin</span>
+              <span>{t('made-continue')}</span>
             </div>
           </div>
         </div>

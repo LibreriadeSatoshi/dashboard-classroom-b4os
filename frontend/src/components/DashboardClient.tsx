@@ -8,6 +8,7 @@ import StudentsTable from '@/components/StudentsTable'
 import Header from '@/components/Header'
 import { useNamePreference } from '@/contexts/NamePreferenceContext'
 import { useTranslations } from 'next-intl'
+import { filterValidGrades, calculateGradePercentage } from '@/utils/gradeFilters'
 
 interface DashboardClientProps {
   initialData: {
@@ -24,29 +25,17 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   const t = useTranslations('dashboard')
   const tc = useTranslations('common')
 
-  // Calculate statistics with proper percentage calculation
-  const calculatePercentage = (pointsAwarded: number, pointsAvailable: number) => {
-    if (pointsAvailable > 0) {
-      return (pointsAwarded / pointsAvailable) * 100
-    } else if (pointsAwarded > 0) {
-      return 100 // Si hay puntos otorgados pero no disponibles, considerar 100%
-    }
-    return 0
-  }
+  // Filter valid grades using centralized business logic
+  const validGrades = filterValidGrades(grades)
 
-  const validGrades = grades.filter(grade => {
-    const pointsAwarded = grade.points_awarded || 0
-    const pointsAvailable = grade.points_available || 0
-    return pointsAwarded > 0 || pointsAvailable > 0
-  })
-
+  // Calculate statistics
   const stats = {
     totalStudents: students.length,
     totalAssignments: assignments.length,
     totalGrades: validGrades.length,
     averageGrade: validGrades.length > 0 
       ? Math.round(validGrades.reduce((sum, grade) => {
-          const percentage = calculatePercentage(grade.points_awarded || 0, grade.points_available || 0)
+          const percentage = calculateGradePercentage(grade.points_awarded || 0, grade.points_available || 0)
           return sum + percentage
         }, 0) / validGrades.length)
       : 0

@@ -18,7 +18,6 @@ export default function LanguageSwitcher() {
       // Navigate to the new locale
       const newPath = `/${nextLocale}${pathWithoutLocale ? `/${pathWithoutLocale}` : ''}`;
       router.push(newPath);
-      router.refresh();
     });
   };
 

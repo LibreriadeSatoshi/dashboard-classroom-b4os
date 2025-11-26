@@ -13,6 +13,7 @@ import {
 import LOTRAvatar from './LOTRAvatar'
 import { useNamePreference } from '@/contexts/NamePreferenceContext'
 import { useTranslations } from 'next-intl'
+import { filterValidGrades, calculateGradePercentage } from '@/utils/gradeFilters'
 
 interface StudentsTableProps {
   students: Student[]
@@ -33,6 +34,9 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
   // KISS: Extract user info once
   const isAdmin = (session?.user as any)?.role === 'administrator'
   const currentUsername = (session?.user as any)?.githubUsername
+
+  // Filter valid grades using centralized business logic
+  const validGrades = filterValidGrades(grades)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedAssignment, setSelectedAssignment] = useState('')
@@ -120,17 +124,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
     loadAllUserPreferences()
   }, [session?.user, showRealName]) // Reload when session or current user's preference changes
 
-  // Calculate percentage
-  const calculatePercentage = (pointsAwarded: number, pointsAvailable: number) => {
-    if (pointsAvailable > 0) {
-      return Math.round((pointsAwarded / pointsAvailable) * 100)
-    } else if (pointsAwarded > 0) {
-      return 100
-    }
-    return 0
-  }
-
-  // KISS: Display name based on role and privacy preference
+  // Display name based on role and privacy preference
   const getDisplayName = (githubUsername: string) => {
     if (isAdmin || userPreferences[githubUsername]) {
       return githubUsername
@@ -138,7 +132,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
     return generateAnonymousId(githubUsername)
   }
 
-  // KISS: Display description based on role and privacy preference
+  // Display description based on role and privacy preference
   const getDisplayDescription = (githubUsername: string) => {
     const anonymousId = generateAnonymousId(githubUsername)
 
@@ -177,7 +171,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
 
   // Filter and sort data
   const filteredAndSortedGrades = useMemo(() => {
-    let filtered = grades
+    let filtered = validGrades
 
     // Filter by search term
     if (searchTerm) {
@@ -217,8 +211,8 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
       let bValue: string | number = b[sortField] as string | number
 
       if (sortField === 'percentage') {
-        aValue = calculatePercentage(a.points_awarded || 0, a.points_available || 0)
-        bValue = calculatePercentage(b.points_awarded || 0, b.points_available || 0)
+        aValue = calculateGradePercentage(a.points_awarded || 0, a.points_available || 0)
+        bValue = calculateGradePercentage(b.points_awarded || 0, b.points_available || 0)
       }
 
       if (typeof aValue === 'string' && typeof bValue === 'string') {
@@ -234,7 +228,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
     })
 
     return filtered
-  }, [grades, searchTerm, selectedAssignment, sortField, sortDirection])
+  }, [validGrades, searchTerm, selectedAssignment, sortField, sortDirection])
 
 
   const handleSort = (field: SortField) => {
@@ -391,7 +385,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
           </thead>
           <tbody className="divide-y divide-gray-200">
             {filteredAndSortedGrades.map((grade, index) => {
-              const percentage = calculatePercentage(grade.points_awarded || 0, grade.points_available || 0)
+              const percentage = calculateGradePercentage(grade.points_awarded || 0, grade.points_available || 0)
               const displayName = getDisplayName(grade.github_username)
               const description = getDisplayDescription(grade.github_username)
               const isSearchedUser = searchedUserInfo?.realUsername.toLowerCase() === grade.github_username.toLowerCase()
@@ -512,7 +506,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-xl">
          <div className="flex items-center justify-center text-sm text-gray-600">
            <span>
-             {t('showing')} {filteredAndSortedGrades.length} {t('of')} {grades.length} {t('records')}
+             {t('showing')} {filteredAndSortedGrades.length} {t('of')} {validGrades.length} {t('records')}
            </span>
          </div>
        </div>
