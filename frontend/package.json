@@ -11,7 +11,7 @@
   "dependencies": {
     "@auth/supabase-adapter": "^1.10.0",
     "@supabase/supabase-js": "^2.57.4",
-    "next": "15.5.3",
+    "next": "15.5.7",
     "next-auth": "^4.24.11",
     "next-intl": "^4.3.9",
     "phosphor-react": "^1.4.1",
