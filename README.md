@@ -13,10 +13,21 @@ Sistema para sincronizar y visualizar challenges de GitHub Classroom con temáti
 ## Inicio Rápido
 
 ### Backend
+Crear un entorno virtual de Python
+```bash
+python3 -m venv venv     # esto solo hace falta una vez
+source venv/bin/activate # usar esto cada vez que quieras usar el entorno
+```
+
+Instalar las dependencias
 ```bash
 pip3 install -r requirements.txt
 cp env.example .env  # Configurar Supabase
-python3 backend/download_grades_supabase.py
+```
+
+Correr el backend
+```bash
+python3 backend/src/download_grades_supabase.py
 ```
 
 ### Frontend
