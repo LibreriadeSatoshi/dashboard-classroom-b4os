@@ -21,7 +21,7 @@ export async function GET() {
     const githubUsername = (session.user as any).githubUsername
 
     const { data, error } = await supabase
-      .from('user_privacy')
+      .from('zzz_user_privacy')
       .select('show_real_name')
       .eq('github_username', githubUsername)
       .single()
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     const { show_real_name } = await request.json()
 
     const { data, error } = await supabase
-      .from('user_privacy')
+      .from('zzz_user_privacy')
       .upsert({
         github_username: githubUsername,
         show_real_name,

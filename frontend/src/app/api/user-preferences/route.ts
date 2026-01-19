@@ -18,7 +18,7 @@ export async function GET() {
     }
 
     const { data, error } = await supabase
-      .from('user_privacy')
+      .from('zzz_user_privacy')
       .select('github_username, show_real_name')
 
     if (error) {

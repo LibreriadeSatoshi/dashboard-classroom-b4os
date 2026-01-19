@@ -21,9 +21,9 @@ export interface DashboardData {
 async function getFullLeaderboard(): Promise<DashboardData> {
   const [studentsResult, assignmentsResult, gradesResult, feedbackResult] = await Promise.all([
     supabase.from('students').select('*').order('github_username'),
-    supabase.from('assignments').select('*').order('name'),
+    supabase.from('zzz_assignments').select('*').order('name'),
     supabase.from('consolidated_grades').select('*').order('github_username'),
-    supabase.from('student_reviewers')
+    supabase.from('zzz_student_reviewers')
       .select('id, student_username, reviewer_username, assignment_name, feedback_for_student, status, completed_at')
       .not('feedback_for_student', 'is', null)
   ])
@@ -69,11 +69,11 @@ async function getAnonymizedLeaderboard(currentUsername?: string): Promise<Dashb
     // Get ALL students for leaderboard
     supabase.from('students').select('*').order('github_username'),
     // Get ALL assignments
-    supabase.from('assignments').select('*').order('name'),
+    supabase.from('zzz_assignments').select('*').order('name'),
     // Get ALL grades for leaderboard
     supabase.from('consolidated_grades').select('*').order('github_username'),
     // Get privacy preferences to filter feedback visibility
-    supabase.from('user_privacy').select('github_username, show_real_name')
+    supabase.from('zzz_user_privacy').select('github_username, show_real_name')
   ])
 
   if (studentsResult.error) {
@@ -103,7 +103,7 @@ async function getAnonymizedLeaderboard(currentUsername?: string): Promise<Dashb
 
   // Fetch feedback: own feedback + feedback from users who revealed their identity
   const feedbackResult = await supabase
-    .from('student_reviewers')
+    .from('zzz_student_reviewers')
     .select('id, student_username, reviewer_username, assignment_name, feedback_for_student, status, completed_at')
     .not('feedback_for_student', 'is', null)
 

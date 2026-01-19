@@ -36,7 +36,7 @@ export const authOptions = {
       try {
         // Check if user is in authorized_users table
         const { data: authorizedUser } = await supabase
-          .from('authorized_users')
+          .from('zzz_authorized_users')
           .select('*')
           .eq('github_username', githubUsername)
           .single()
@@ -82,7 +82,7 @@ export const authOptions = {
         try {
           // Check if user is in authorized_users table first
           const { data: authorizedUser } = await supabase
-            .from('authorized_users')
+            .from('zzz_authorized_users')
             .select('role')
             .eq('github_username', githubUsername)
             .single()
