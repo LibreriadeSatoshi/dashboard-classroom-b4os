@@ -20,7 +20,7 @@ export interface DashboardData {
 // Helper function to get full leaderboard (admin/instructor only)
 async function getFullLeaderboard(): Promise<DashboardData> {
   const [studentsResult, assignmentsResult, gradesResult, feedbackResult] = await Promise.all([
-    supabase.from('students').select('*').order('github_username'),
+    supabase.from('zzz_students').select('*').order('github_username'),
     supabase.from('zzz_assignments').select('*').order('name'),
     supabase.from('consolidated_grades').select('*').order('github_username'),
     supabase.from('zzz_student_reviewers')
@@ -67,7 +67,7 @@ async function getAnonymizedLeaderboard(currentUsername?: string): Promise<Dashb
   // Fetch all data in parallel (students see full leaderboard)
   const [studentsResult, assignmentsResult, gradesResult, privacyResult] = await Promise.all([
     // Get ALL students for leaderboard
-    supabase.from('students').select('*').order('github_username'),
+    supabase.from('zzz_students').select('*').order('github_username'),
     // Get ALL assignments
     supabase.from('zzz_assignments').select('*').order('name'),
     // Get ALL grades for leaderboard
