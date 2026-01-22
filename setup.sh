@@ -6,35 +6,13 @@ echo "============================================================"
 # Verificar dependencias
 echo "📋 Verificando dependencias..."
 
-# Python
-if ! command -v python3 &> /dev/null; then
-    echo "❌ Python3 no está instalado. Por favor instala Python 3.8+"
-    exit 1
-fi
-
 # Node.js
 if ! command -v node &> /dev/null; then
     echo "❌ Node.js no está instalado. Por favor instala Node.js 18+"
     exit 1
 fi
 
-# GitHub CLI
-if ! command -v gh &> /dev/null; then
-    echo "❌ GitHub CLI no está instalado. Instala desde: https://cli.github.com/"
-    exit 1
-fi
-
 echo "✅ Dependencias verificadas"
-
-# Configurar Backend
-echo "🐍 Configurando backend..."
-pip3 install -r requirements.txt
-
-if [ ! -f .env ]; then
-    echo "📝 Creando archivo .env..."
-    cp env.example .env
-    echo "⚠️  Por favor edita .env con tus credenciales de Supabase"
-fi
 
 # Configurar Frontend
 echo "⚛️  Configurando frontend..."
@@ -52,10 +30,9 @@ echo ""
 echo "🎉 ¡Configuración completada!"
 echo ""
 echo "📋 Próximos pasos:"
-echo "1. Configura tus credenciales en .env y frontend/.env.local"
+echo "1. Configura tus credenciales en frontend/.env.local"
 echo "2. Ejecuta setup_database.sql en Supabase"
-echo "3. Ejecuta: python3 backend/download_grades_supabase.py"
-echo "4. Ejecuta: cd frontend && npm run dev"
+echo "3. Ejecuta: cd frontend && npm run dev"
 echo ""
 echo "🌐 Dashboard: http://localhost:3000"
 echo "📊 Base de datos: b4os-alumni-results"

@@ -1,8 +1,6 @@
 # Logs
 *.log
 logs/
-backend/logs/
-backend/src/logs/
 
 # Environment variables
 .env
