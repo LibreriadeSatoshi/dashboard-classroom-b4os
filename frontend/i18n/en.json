@@ -74,5 +74,12 @@
     "made": "Made with",
     "made-continue": "for the Bitcoin community",
     "contact": "Contact B4OS"
+  },
+  "feedback": {
+    "title": "Your Feedback",
+    "loading": "Loading feedback...",
+    "error_loading": "Failed to load feedback.",
+    "error_marking_as_read": "Failed to mark feedback as read.",
+    "no_feedback": "No feedback to display."
   }
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Image from 'next/image'
 import { type Student, type Assignment, type ConsolidatedGrade, type StudentFeedback } from '@/lib/supabase'
 import { Users, Crown, Sword, Shield } from 'phosphor-react'
@@ -16,6 +17,7 @@ interface DashboardClientProps {
     assignments: Assignment[]
     grades: ConsolidatedGrade[]
     feedback: StudentFeedback[]
+    hasUnreadFeedback: boolean
   }
 }
 
@@ -24,6 +26,28 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   const { showRealName } = useNamePreference()
   const t = useTranslations('dashboard')
   const tc = useTranslations('common')
+
+  // State for feedback dropdown
+  const [isFeedbackDropdownOpen, setFeedbackDropdownOpen] = useState(false)
+  const [hasUnreadFeedback, setHasUnreadFeedback] = useState(initialData.hasUnreadFeedback)
+
+  // Handlers for feedback dropdown
+  const handleToggleFeedbackDropdown = () => {
+    setFeedbackDropdownOpen(prev => {
+      if (!prev) { // If opening the dropdown
+        setHasUnreadFeedback(false); // Mark all as read visually
+      }
+      return !prev;
+    });
+  }
+
+  const handleFeedbackRead = () => {
+    // This function is a callback for the panel.
+    // We can re-fetch the dashboard data or simply turn off the bell.
+    // For now, let's assume reading any feedback might clear the "new" status.
+    // A more robust solution might check if *any* unread feedback remains.
+    setHasUnreadFeedback(false) // Simplistic approach: hide indicator after interaction
+  }
 
   // Filter valid grades using centralized business logic
   const validGrades = filterValidGrades(grades)
@@ -45,7 +69,13 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
 
   return (
     <>
-      <Header />
+      <Header 
+        hasUnreadFeedback={hasUnreadFeedback} 
+        isFeedbackOpen={isFeedbackDropdownOpen}
+        onFeedbackClick={handleToggleFeedbackDropdown}
+        onFeedbackRead={handleFeedbackRead}
+        onCloseFeedback={handleToggleFeedbackDropdown}
+      />
       <div className="min-h-screen bg-slate-900 text-white relative overflow-hidden">
       {/* Epic LOTR Background */}
       <div className="fixed inset-0 z-0">

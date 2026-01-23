@@ -5,7 +5,15 @@ import { authOptions } from './auth-config'
 import type { Student, Assignment, ConsolidatedGrade, StudentFeedback } from './supabase'
 
 const supabaseUrl = process.env.SUPABASE_URL || ''
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+const supabaseServiceRoleKey = process.env.SUPABASE_ANON_KEY || ''
+
+// Mock data - temporary, to be replaced with a real data source
+const allFeedback = [
+  { id: 1, studentId: '1', content: 'Great job on the last assignment! Your analysis was spot on.', read: true, createdAt: '2024-05-10T10:00:00Z' },
+  { id: 2, studentId: '1', content: 'Remember to check the formatting guidelines for the next report.', read: false, createdAt: '2024-05-12T14:30:00Z' },
+  { id: 3, studentId: '2', content: 'Your presentation skills are improving.', read: true, createdAt: '2024-05-11T11:00:00Z' },
+  { id: 4, studentId: '1', content: 'I noticed a small error in your code submission for project "Orion". Please review line 42.', read: false, createdAt: '2024-05-13T09:00:00Z' },
+];
 
 // Create Supabase client for server-side operations using service role key to bypass RLS
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
@@ -15,6 +23,7 @@ export interface DashboardData {
   assignments: Assignment[]
   grades: ConsolidatedGrade[]
   feedback: StudentFeedback[]
+  hasUnreadFeedback: boolean
 }
 
 // Helper function to get full leaderboard (admin/instructor only)
@@ -45,11 +54,15 @@ async function getFullLeaderboard(): Promise<DashboardData> {
     // Don't throw - feedback is optional
   }
 
+  // Mock unread feedback check for admin
+  const hasUnreadFeedback = allFeedback.some(f => f.studentId === '1' && !f.read);
+
   return {
     students: studentsResult.data || [],
     assignments: assignmentsResult.data || [],
     grades: gradesResult.data || [],
-    feedback: feedbackResult.data || []
+    feedback: feedbackResult.data || [],
+    hasUnreadFeedback
   }
 }
 
@@ -60,14 +73,15 @@ async function getAnonymizedLeaderboard(currentUsername?: string): Promise<Dashb
       students: [],
       assignments: [],
       grades: [],
-      feedback: []
+      feedback: [],
+      hasUnreadFeedback: false
     }
   }
 
   // Fetch all data in parallel (students see full leaderboard)
   const [studentsResult, assignmentsResult, gradesResult, privacyResult] = await Promise.all([
     // Get ALL students for leaderboard
-    supabase.from('students').select('*').order('github_username'),
+    supabase.from('zzz_students').select('*').order('github_username'),
     // Get ALL assignments
     supabase.from('zzz_assignments').select('*').order('name'),
     // Get ALL grades for leaderboard
@@ -115,11 +129,15 @@ async function getAnonymizedLeaderboard(currentUsername?: string): Promise<Dashb
     )
   }
 
+  // Mock unread feedback check for student
+  const hasUnreadFeedback = allFeedback.some(f => f.studentId === '1' && !f.read);
+
   return {
     students: studentsResult.data || [],
     assignments: assignmentsResult.data || [],
     grades: gradesResult.data || [],
-    feedback: filteredFeedback
+    feedback: filteredFeedback,
+    hasUnreadFeedback
   }
 }
 
