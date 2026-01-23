@@ -8,8 +8,14 @@ import { CaretDown, SignOut, Crown, Eye, EyeSlash, Sword } from 'phosphor-react'
 import { useNamePreference } from '@/contexts/NamePreferenceContext'
 import { useTranslations, useLocale } from 'next-intl'
 import LanguageSwitcher from './LanguageSwitcher'
+import FeedbackBell from './FeedbackBell'
 
-export default function Header() {
+interface HeaderProps {
+  hasUnreadFeedback: boolean;
+  onFeedbackClick: () => void;
+}
+
+export default function Header({ hasUnreadFeedback, onFeedbackClick }: HeaderProps) {
   const { data: session } = useSession()
   const [showDropdown, setShowDropdown] = useState(false)
   const { showRealName, setShowRealName, loading } = useNamePreference()
@@ -42,6 +48,9 @@ export default function Header() {
         <div className="flex items-center justify-end gap-4 h-16">
           {/* Language Switcher */}
           <LanguageSwitcher />
+
+          {/* Feedback Bell */}
+          <FeedbackBell hasUnreadFeedback={hasUnreadFeedback} onClick={onFeedbackClick} />
 
           {/* User Menu */}
           <div className="relative">
