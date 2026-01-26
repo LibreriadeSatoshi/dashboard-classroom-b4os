@@ -17,6 +17,115 @@ export interface DashboardData {
   feedback: StudentFeedback[]
 }
 
+export interface WeeklyProgress {
+  weekLabel: string; // e.g., "Week 40" or "Oct 2"
+  studentScore: number; // Percentage
+  classAverage: number; // Percentage
+}
+
+// Helper function to get weekly progress data for a student and class average
+export async function getWeeklyProgressData(githubUsername: string): Promise<WeeklyProgress[]> {
+  const sixWeeksAgo = new Date()
+  sixWeeksAgo.setDate(sixWeeksAgo.getDate() - (6 * 7)) // Go back 6 weeks
+
+  const { data: grades, error } = await supabase
+    .from('consolidated_grades')
+    .select('github_username, points_awarded, points_available, grade_updated_at')
+    .gte('grade_updated_at', sixWeeksAgo.toISOString())
+    .order('grade_updated_at', { ascending: true })
+
+  if (error) {
+    console.error('Error fetching weekly grades:', error)
+    throw error
+  }
+
+  const weeklyDataMap = new Map<string, {
+    studentAwarded: number, studentAvailable: number,
+    classAwarded: number, classAvailable: number,
+    studentCount: Set<string> // To count unique students per week for average
+  }>()
+
+  // Initialize map for the last 6 weeks
+  for (let i = 0; i < 6; i++) {
+    const weekStart = new Date()
+    weekStart.setDate(weekStart.getDate() - ((5 - i) * 7))
+    const weekLabel = `Week ${getWeekNumber(weekStart)}` // Or format as "Mon Oct 2"
+    weeklyDataMap.set(weekLabel, {
+      studentAwarded: 0, studentAvailable: 0,
+      classAwarded: 0, classAvailable: 0,
+      studentCount: new Set<string>()
+    })
+  }
+
+  grades.forEach(grade => {
+    const gradeDate = new Date(grade.grade_updated_at)
+    const weekLabel = `Week ${getWeekNumber(gradeDate)}` // Or format as "Mon Oct 2"
+
+    if (!weeklyDataMap.has(weekLabel)) {
+      // This might happen if grades are older than 6 weeks but still fetched due to gte filter
+      // Or if a week has no grades, we still want it in the map
+      weeklyDataMap.set(weekLabel, {
+        studentAwarded: 0, studentAvailable: 0,
+        classAwarded: 0, classAvailable: 0,
+        studentCount: new Set<string>()
+      })
+    }
+
+    const weekStats = weeklyDataMap.get(weekLabel)!
+
+    // Aggregate for the specific student
+    if (grade.github_username === githubUsername) {
+      weekStats.studentAwarded += grade.points_awarded || 0
+      weekStats.studentAvailable += grade.points_available || 0
+    }
+
+    // Aggregate for the class
+    weekStats.classAwarded += grade.points_awarded || 0
+    weekStats.classAvailable += grade.points_available || 0
+    weekStats.studentCount.add(grade.github_username)
+  })
+
+  const result: WeeklyProgress[] = Array.from(weeklyDataMap.entries())
+    .sort(([labelA], [labelB]) => {
+      // Simple sorting by week number, assuming "Week XX" format
+      const weekNumA = parseInt(labelA.split(' ')[1])
+      const weekNumB = parseInt(labelB.split(' ')[1])
+      return weekNumA - weekNumB
+    })
+    .map(([weekLabel, stats]) => {
+      const studentScore = stats.studentAvailable > 0
+        ? (stats.studentAwarded / stats.studentAvailable) * 100
+        : 0
+
+      // Calculate class average based on total points, not average of averages
+      const classAverage = stats.classAvailable > 0
+        ? (stats.classAwarded / stats.classAvailable) * 100
+        : 0
+
+      return {
+        weekLabel,
+        studentScore: parseFloat(studentScore.toFixed(2)),
+        classAverage: parseFloat(classAverage.toFixed(2))
+      }
+    })
+
+  return result
+}
+
+// Helper function to get week number (ISO week date)
+function getWeekNumber(d: Date): number {
+  // Copy date so don't modify original
+  d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  // Set to nearest Thursday: current date + 4 - current day number
+  // Make Sunday's day number 7
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  // Get first day of year
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  // Calculate full weeks to nearest Thursday
+  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return weekNo;
+}
+
 // Helper function to get full leaderboard (admin/instructor only)
 async function getFullLeaderboard(): Promise<DashboardData> {
   const [studentsResult, assignmentsResult, gradesResult, feedbackResult] = await Promise.all([
