@@ -4,7 +4,6 @@ Sistema para sincronizar y visualizar challenges de GitHub Classroom con temáti
 
 ## Características
 
-- **Sincronización automática** desde GitHub Classroom
 - **Dashboard épico** con tema LOTR y usuarios anónimos
 - **Avatares temáticos** (Elfos, Enanos, Hobbits, Rangers, Magos)
 - **Identidades anónimas** consistentes y determinísticas
@@ -12,29 +11,9 @@ Sistema para sincronizar y visualizar challenges de GitHub Classroom con temáti
 
 ## Inicio Rápido
 
-### Backend
-Crear un entorno virtual de Python
 ```bash
-python3 -m venv venv     # esto solo hace falta una vez
-source venv/bin/activate # usar esto cada vez que quieras usar el entorno
-```
-
-Instalar las dependencias
-```bash
-pip3 install -r requirements.txt
-cp env.example .env  # Configurar Supabase
-```
-
-Correr el backend
-```bash
-python3 backend/src/download_grades_supabase.py
-```
-
-### Frontend
-```bash
-cd frontend
 npm install
-cp env.local.example .env.local  # Configurar Supabase
+cp env.local.example .env.local
 npm run dev
 ```
 
@@ -55,14 +34,8 @@ npm run dev
 
 ## Configuración
 
-### Variables de Entorno
+### Variables de Entorno (.env.local)
 ```env
-# Backend (.env)
-CLASSROOM_NAME=tu_nombre_de_clase
-SUPABASE_URL=https://tu-proyecto.supabase.co
-SUPABASE_KEY=tu_clave_anon_aqui
-
-# Frontend (.env.local)
 # IMPORTANTE: NO usar prefijo NEXT_PUBLIC_ para evitar exposición de credenciales
 # Estas variables solo se usan en rutas de API del servidor
 SUPABASE_URL=https://tu-proyecto.supabase.co
@@ -85,8 +58,8 @@ NEXTAUTH_SECRET=tu_nextauth_secret
 
 ## Stack Tecnológico
 
-**Backend**: Python + Supabase + GitHub CLI  
-**Frontend**: Next.js + TypeScript + Tailwind CSS  
+**Frontend**: Next.js + TypeScript + Tailwind CSS
+**Autenticación**: NextAuth.js + GitHub OAuth
 **Base de Datos**: PostgreSQL (Supabase)
 
 ---
