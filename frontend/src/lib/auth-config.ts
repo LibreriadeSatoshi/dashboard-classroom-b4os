@@ -1,10 +1,11 @@
 import GitHubProvider from 'next-auth/providers/github'
 import { createClient } from '@supabase/supabase-js'
 
-// Create server-side Supabase client (uses non-public env vars)
+// Create server-side Supabase client (uses service role key for auth callbacks)
+// Note: This is safe because auth callbacks run only on the server, never exposed to client
 const supabase = createClient(
   process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_ANON_KEY || ''
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 )
 
 interface GitHubProfile {
@@ -83,12 +84,13 @@ export const authOptions = {
           // Check if user is in authorized_users table first
           const { data: authorizedUser } = await supabase
             .from('zzz_authorized_users')
-            .select('role')
+            .select('role, status')
             .eq('github_username', githubUsername)
             .single()
 
-          if (authorizedUser) {
-            token.role = 'administrator'
+          if (authorizedUser && authorizedUser.status === 'active') {
+            // Map database role to application role
+            token.role = authorizedUser.role === 'admin' ? 'administrator' : 'dev'
           } else {
             // Check if user is a student
             const { data: studentUser } = await supabase

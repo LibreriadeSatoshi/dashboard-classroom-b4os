@@ -4,9 +4,10 @@ import type { Session } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { createClient } from '@supabase/supabase-js'
 
+// Use service role key to bypass RLS - safe because this runs server-side only
 const supabase = createClient(
   process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_ANON_KEY || ''
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 )
 
 // GET: Fetch all users' privacy preferences
