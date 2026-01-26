@@ -247,6 +247,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           grades={grades}
           feedback={feedback}
           showRealNames={showRealName}
+          averageGrade={stats.averageGrade}
         />
       </div>
       </div>

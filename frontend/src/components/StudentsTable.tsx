@@ -21,12 +21,13 @@ interface StudentsTableProps {
   grades: ConsolidatedGrade[]
   feedback: StudentFeedback[]
   showRealNames?: boolean
+  averageGrade: number // Added averageGrade prop
 }
 
 type SortField = 'github_username' | 'assignment_name' | 'points_awarded' | 'points_available' | 'percentage'
 type SortDirection = 'asc' | 'desc'
 
-export default function StudentsTable({ assignments, grades, feedback, showRealNames = false }: StudentsTableProps) {
+export default function StudentsTable({ assignments, grades, feedback, showRealNames = true, averageGrade }: StudentsTableProps) {
   const { data: session } = useSession()
   const { showRealName } = useNamePreference()
   const t = useTranslations('table')
@@ -228,7 +229,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
     })
 
     return filtered
-  }, [validGrades, searchTerm, selectedAssignment, sortField, sortDirection])
+  }, [validGrades, searchTerm, selectedAssignment, sortField, sortDirection, searchedUserInfo, isAdmin, currentUsername, userPreferences])
 
 
   const handleSort = (field: SortField) => {
@@ -389,18 +390,39 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
               const displayName = getDisplayName(grade.github_username)
               const description = getDisplayDescription(grade.github_username)
               const isSearchedUser = searchedUserInfo?.realUsername.toLowerCase() === grade.github_username.toLowerCase()
-              const isCurrentUser = currentUsername === grade.github_username
+              const isCurrentUser = currentUsername === grade.github_username && !isAdmin // Identify current student
               const rowKey = `${grade.github_username}-${grade.assignment_name}-${index}`
               const assignmentFeedback = getFeedbackForAssignment(grade.github_username, grade.assignment_name)
               const hasFeedback = assignmentFeedback.length > 0
               const isExpanded = expandedRows.has(rowKey)
+
+              // Determine comparison with average
+              let averageComparison = ''
+              let comparisonIcon = null
+              let comparisonColor = ''
+
+              if (isCurrentUser) {
+                if (percentage > averageGrade) {
+                  averageComparison = t('aboveAverage')
+                  comparisonIcon = <CaretUp size={14} className="text-green-500" />
+                  comparisonColor = 'text-green-700'
+                } else if (percentage < averageGrade) {
+                  averageComparison = t('belowAverage')
+                  comparisonIcon = <CaretDown size={14} className="text-red-500" />
+                  comparisonColor = 'text-red-700'
+                } else {
+                  averageComparison = t('onPar')
+                  comparisonIcon = <CaretRight size={14} className="text-gray-500" />
+                  comparisonColor = 'text-gray-700'
+                }
+              }
 
               return (
                 <Fragment key={rowKey}>
                   <tr
                     className={`hover:bg-gray-50 transition-colors duration-200 ${
                       isSearchedUser ? 'bg-amber-50 border-l-4 border-amber-500 shadow-sm' : ''
-                    } ${hasFeedback ? 'cursor-pointer' : ''}`}
+                    } ${isCurrentUser ? 'bg-blue-50 border-l-4 border-blue-500 shadow-sm' : ''} ${hasFeedback ? 'cursor-pointer' : ''}`}
                     onClick={hasFeedback ? () => toggleRowExpanded(rowKey) : undefined}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -421,6 +443,12 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
                               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
                                 <Crown className="h-3 w-3 mr-1" />
                                 {t('itsYou')}
+                              </span>
+                            )}
+                            {isCurrentUser && ( // New indicator for current user
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                                <Crown className="h-3 w-3 mr-1" />
+                                {t('yourPosition')}
                               </span>
                             )}
                           </div>
@@ -454,23 +482,31 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
                         {grade.points_available || 0}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        {/* Barra de progreso */}
-                        <div className="w-16 bg-gray-200 rounded-full h-2">
-                          <div
-                            className={`h-2 rounded-full transition-all duration-300 ${
-                              percentage >= 80 ? 'bg-green-500' :
-                              percentage >= 60 ? 'bg-yellow-500' :
-                              percentage >= 40 ? 'bg-orange-500' : 'bg-red-500'
-                            }`}
-                            style={{width: `${Math.min(percentage, 100)}%`}}
-                          ></div>
+                    <td className="px-6 py-4 break-word">
+                      <div className="flex flex-col items-start gap-1"> {/* Changed to flex-col for better mobile display */}
+                        <div className="flex items-center gap-3">
+                          {/* Barra de progreso */}
+                          <div className="w-16 bg-gray-200 rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full transition-all duration-300 ${
+                                percentage >= 80 ? 'bg-green-500' :
+                                percentage >= 60 ? 'bg-yellow-500' :
+                                percentage >= 40 ? 'bg-orange-500' : 'bg-red-500'
+                              }`}
+                              style={{width: `${Math.min(percentage, 100)}%`}}
+                            ></div>
+                          </div>
+                          {/* Porcentaje con pill */}
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getGradeBgColor(percentage)} ${getGradeColor(percentage)}`}>
+                            {percentage}%
+                          </span>
                         </div>
-                        {/* Porcentaje con pill */}
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getGradeBgColor(percentage)} ${getGradeColor(percentage)}`}>
-                          {percentage}%
-                        </span>
+                        {isCurrentUser && averageComparison && ( // Display comparison for current user
+                          <div className={`flex items-center gap-1 text-xs font-medium ${comparisonColor}`}>
+                            {comparisonIcon}
+                            {averageComparison} ({t('classAverage')}: {averageGrade}%)
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
