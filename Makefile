@@ -23,34 +23,34 @@ help:
 
 install:
 	@echo "⚛️  Installing frontend dependencies..."
-	cd $(FRONTEND_DIR) && $(NPM) install
+	$(NPM) install
 
 setup-env:
 	@echo "📝 Creating frontend .env.local file..."
-	@if [ ! -f $(FRONTEND_DIR)/.env.local ]; then \
-		cp $(FRONTEND_DIR)/env.local.example $(FRONTEND_DIR)/.env.local; \
-		echo "✅ frontend/.env.local created. Please fill it with your credentials."; \
+	@if [ ! -f .env.local ]; then \
+		cp env.local.example .env.local; \
+		echo "✅ .env.local created. Please fill it with your credentials."; \
 	else \
-		echo "ℹ️ frontend/.env.local file already exists."; \
+		echo "ℹ️ .env.local file already exists."; \
 	fi
 
 dev:
 	@echo "🚀 Starting frontend development server..."
-	cd $(FRONTEND_DIR) && $(NPM) run dev
+	$(NPM) run dev
 
 build:
 	@echo "📦 Building frontend for production..."
-	cd $(FRONTEND_DIR) && $(NPM) run build
+	$(NPM) run build
 start:
 	@echo "▶️  Starting production frontend server..."
-	cd $(FRONTEND_DIR) && $(NPM) run start
+	$(NPM) run start
 
 lint:
 	@echo "🔍 Linting frontend code..."
-	cd $(FRONTEND_DIR) && $(NPM) run lint
+	$(NPM) run lint
 
 clean:
 	@echo "🧹 Cleaning up project..."
-	@rm -rf $(FRONTEND_DIR)/.next
-	@rm -rf $(FRONTEND_DIR)/node_modules
+	@rm -rf .next
+	@rm -rf /node_modules
 	@echo "✅ Cleanup complete."
