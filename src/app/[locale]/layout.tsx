@@ -6,6 +6,7 @@ import ClientSessionProvider from "@/components/SessionProvider";
 import { NamePreferenceProvider } from "@/contexts/NamePreferenceContext";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
+import MSWProvider from '@/components/MSWProvider';
 
 // Epic font for LOTR titles
 const cinzel = Cinzel({
@@ -57,16 +58,18 @@ export default async function LocaleLayout({
       <body
         className={`${cinzel.variable} ${inter.variable} ${geistMono.variable} antialiased`}
       >
-        <NextIntlClientProvider messages={messages}>
-          <ClientSessionProvider>
-            <NamePreferenceProvider>
-              <main className="min-h-screen">
-                {children}
-              </main>
-              <Footer />
-            </NamePreferenceProvider>
-          </ClientSessionProvider>
-        </NextIntlClientProvider>
+        <MSWProvider>
+          <NextIntlClientProvider messages={messages}>
+            <ClientSessionProvider>
+              <NamePreferenceProvider>
+                <main className="min-h-screen">
+                  {children}
+                </main>
+                <Footer />
+              </NamePreferenceProvider>
+            </ClientSessionProvider>
+          </NextIntlClientProvider>
+        </MSWProvider>
       </body>
     </html>
   );

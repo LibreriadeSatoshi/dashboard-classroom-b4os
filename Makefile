@@ -2,55 +2,60 @@
 
 # Variables
 NPM = npm
-FRONTEND_DIR = frontend/
 
 # Phony targets (targets that are not files)
-.PHONY: help install setup-env dev build start lint clean
+.PHONY: help install setup-env dev build start lint clean generate
 
 help:
 	@echo "Makefile for B4OS Classroom Dashboard"
 	@echo ""
 	@echo "Usage:"
 	@echo "  make help          - Show this help message"
-	@echo "  make install       - Install frontend dependencies"
-	@echo "  make setup-env     - Create frontend/.env.local from example"
-	@echo "  make dev           - Start the frontend development server"
-	@echo "  make build         - Build the frontend for production"
-	@echo "  make start         - Start the production frontend server"
-	@echo "  make lint          - Lint the frontend code"
+	@echo "  make install       - Install dependencies"
+	@echo "  make setup-env     - Create .env.local from example"
+	@echo "  make dev           - Start the development server"
+	@echo "  make build         - Build the app for production"
+	@echo "  make start         - Start the production server"
+	@echo "  make lint          - Lint the code"
+	@echo "  make generate      - Generate a new component"
 	@echo "  make clean         - Remove generated files and caches"
 	@echo ""
 
 install:
-	@echo "⚛️  Installing frontend dependencies..."
-	cd $(FRONTEND_DIR) && $(NPM) install
+	@echo "⚛️  Installing dependencies..."
+	$(NPM) install
 
 setup-env:
-	@echo "📝 Creating frontend .env.local file..."
-	@if [ ! -f $(FRONTEND_DIR)/.env.local ]; then \
-		cp $(FRONTEND_DIR)/env.local.example $(FRONTEND_DIR)/.env.local; \
-		echo "✅ frontend/.env.local created. Please fill it with your credentials."; \
+	@echo "📝 Creating .env.local file..."
+	@if [ ! -f .env.local ]; then \
+		cp env.local.example .env.local; \
+		echo "✅ .env.local created. Please fill it with your credentials."; \
 	else \
-		echo "ℹ️ frontend/.env.local file already exists."; \
+		echo "ℹ️ .env.local file already exists."; \
 	fi
 
 dev:
-	@echo "🚀 Starting frontend development server..."
-	cd $(FRONTEND_DIR) && $(NPM) run dev
+	@echo "🚀 Starting development server..."
+	$(NPM) run dev
 
 build:
-	@echo "📦 Building frontend for production..."
-	cd $(FRONTEND_DIR) && $(NPM) run build
+	@echo "📦 Building for production..."
+	$(NPM) run build
+
 start:
-	@echo "▶️  Starting production frontend server..."
-	cd $(FRONTEND_DIR) && $(NPM) run start
+	@echo "▶️  Starting production server..."
+	$(NPM) run start
 
 lint:
-	@echo "🔍 Linting frontend code..."
-	cd $(FRONTEND_DIR) && $(NPM) run lint
+	@echo "🔍 Linting code..."
+	$(NPM) run lint
+
+generate:
+	@echo "✨ Generating a new component..."
+	$(NPM) run generate
 
 clean:
 	@echo "🧹 Cleaning up project..."
-	@rm -rf $(FRONTEND_DIR)/.next
-	@rm -rf $(FRONTEND_DIR)/node_modules
+	@rm -rf .next
+	@rm -rf node_modules
 	@echo "✅ Cleanup complete."
