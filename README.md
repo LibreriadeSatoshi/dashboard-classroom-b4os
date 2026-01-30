@@ -1,3 +1,18 @@
+<div align="center">
+  <a href="#">
+    <img alt="B4OS logo" src="public/b4os.png" height="128">
+  </a>
+
+
+<a href="https://nextjs.org"><img alt="Next.js" src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white"></a>
+<a href="https://www.typescriptlang.org"><img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white"></a>
+<a href="https://tailwindcss.com"><img alt="Tailwind CSS" src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white"></a>
+<a href="https://supabase.com"><img alt="Supabase" src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white"></a>
+<a href="https://github.com/vercel/next.js/blob/canary/license.md"><img alt="License" src="https://img.shields.io/npm/l/next.svg?style=for-the-badge&labelColor=000000"></a>
+
+</div>
+
+
 # Dashboard B4OS - GitHub Classroom
 
 Sistema para sincronizar y visualizar challenges de GitHub Classroom con temática épica LOTR.
@@ -8,14 +23,6 @@ Sistema para sincronizar y visualizar challenges de GitHub Classroom con temáti
 - **Avatares temáticos** (Elfos, Enanos, Hobbits, Rangers, Magos)
 - **Identidades anónimas** consistentes y determinísticas
 - **Auto-identificación** mediante búsqueda de username real
-
-## Inicio Rápido
-
-```bash
-npm install
-cp env.local.example .env.local
-npm run dev
-```
 
 ## Temática LOTR
 
@@ -32,35 +39,19 @@ npm run dev
 - 👑 **Rangers**: Colores nobles y reales
 - 🧙‍♂️ **Magos**: Púrpuras mágicos
 
-## Configuración
+## Contribuciones
 
-### Variables de Entorno (.env.local)
-```env
-# IMPORTANTE: NO usar prefijo NEXT_PUBLIC_ para evitar exposición de credenciales
-# Estas variables solo se usan en rutas de API del servidor
-SUPABASE_URL=https://tu-proyecto.supabase.co
-SUPABASE_ANON_KEY=tu_clave_anon_aqui
-GITHUB_CLIENT_ID=tu_github_client_id
-GITHUB_CLIENT_SECRET=tu_github_client_secret
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=tu_nextauth_secret
-```
-
-### Base de Datos
-1. Crear proyecto en [Supabase](https://supabase.com)
-2. Configurar las tablas necesarias:
-   - `students` (github_username, updated_at)
-   - `assignments` (id, name, points_available, updated_at)
-   - `grades` (id, github_username, assignment_name, points_awarded, updated_at)
-   - `consolidated_grades` (vista consolidada)
-   - `authorized_users` (github_username, role)
-   - `user_privacy` (github_username, show_real_name, updated_at)
+¡Gracias por tu interés en contribuir! Para conocer cómo configurar tu entorno de desarrollo, por favor consulta nuestra [Guía de Contribución](CONTRIBUTING.md).
 
 ## Stack Tecnológico
 
 **Frontend**: Next.js + TypeScript + Tailwind CSS
 **Autenticación**: NextAuth.js + GitHub OAuth
 **Base de Datos**: PostgreSQL (Supabase)
+
+## Licencia
+
+Este proyecto está bajo la Licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más detalles.
 
 ---
 
