@@ -5,7 +5,7 @@ import { authOptions } from './auth-config'
 import type { Student, Assignment, ConsolidatedGrade, StudentFeedback } from './supabase'
 
 const supabaseUrl = process.env.SUPABASE_URL || ''
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+const supabaseServiceRoleKey = process.env.SUPABASE_ANON_KEY || ''
 
 // Create Supabase client for server-side operations using service role key to bypass RLS
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
