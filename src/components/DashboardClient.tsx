@@ -2,10 +2,12 @@
 
 import Image from 'next/image'
 import { type Student, type Assignment, type ConsolidatedGrade, type StudentFeedback } from '@/lib/supabase'
+import { type WeeklyProgress } from '@/lib/dashboard' // Corrected import path for WeeklyProgress
 import { Users, Crown, Sword, Shield } from 'phosphor-react'
 import StatsCard from '@/components/StatsCard'
 import StudentsTable from '@/components/StudentsTable'
 import Header from '@/components/Header'
+import ProgressChart from '@/components/ProgressChart' // Import ProgressChart
 import { useNamePreference } from '@/contexts/NamePreferenceContext'
 import { useTranslations } from 'next-intl'
 import { filterValidGrades, calculateGradePercentage } from '@/utils/gradeFilters'
@@ -16,10 +18,11 @@ interface DashboardClientProps {
     assignments: Assignment[]
     grades: ConsolidatedGrade[]
     feedback: StudentFeedback[]
-  }
+  },
+  weeklyProgressData: WeeklyProgress[] // Added weeklyProgressData prop
 }
 
-export default function DashboardClient({ initialData }: DashboardClientProps) {
+export default function DashboardClient({ initialData, weeklyProgressData }: DashboardClientProps) {
   const { students, assignments, grades, feedback } = initialData
   const { showRealName } = useNamePreference()
   const t = useTranslations('dashboard')
@@ -239,6 +242,10 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           />
         </div>
 
+        {/* Weekly Progress Chart */}
+        <div className="mb-8">
+          <ProgressChart data={weeklyProgressData} />
+        </div>
 
         {/* Students Table */}
         <StudentsTable
