@@ -3,6 +3,7 @@ import type { Session } from 'next-auth'
 import { createClient } from '@supabase/supabase-js'
 import { authOptions } from './auth-config'
 import type { Student, Assignment, ConsolidatedGrade, StudentFeedback } from './supabase'
+import { Badge, UserBadge } from '@/types/badges'
 
 const supabaseUrl = process.env.SUPABASE_URL || ''
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
@@ -10,11 +11,25 @@ const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 // Create Supabase client for server-side operations using service role key to bypass RLS
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
 
+const hardcodedBadges: Badge[] = [
+  { id: 1, name: 'Pionero de la Comarca', description: 'Completa tu primer desafío.', icon: 'https://res.cloudinary.com/dkuwkpihs/image/upload/v1758759628/web-app-manifest-192x192_dkecn9.png', points_required: 1 },
+  { id: 2, name: 'Explorador de la Tierra Media', description: 'Completa 5 desafíos.', icon: 'https://res.cloudinary.com/dkuwkpihs/image/upload/v1758759628/web-app-manifest-192x192_dkecn9.png', points_required: 5 },
+  { id: 3, name: 'Héroe de Gondor', description: 'Consigue 100 puntos.', icon: 'https://res.cloudinary.com/dkuwkpihs/image/upload/v1758759628/web-app-manifest-192x192_dkecn9.png', points_required: 100 },
+];
+
+const hardcodedUserBadges: UserBadge[] = [
+  { id: 1, user_id: 'gandalf', badge_id: 1, unlocked_at: new Date().toISOString() },
+  { id: 2, user_id: 'gandalf', badge_id: 2, unlocked_at: new Date().toISOString() },
+  { id: 3, user_id: 'aragorn', badge_id: 1, unlocked_at: new Date().toISOString() },
+];
+
 export interface DashboardData {
   students: Student[]
   assignments: Assignment[]
   grades: ConsolidatedGrade[]
   feedback: StudentFeedback[]
+  badges: Badge[]
+  userBadges: UserBadge[]
 }
 
 // Helper function to get full leaderboard (admin/instructor only)
@@ -49,7 +64,9 @@ async function getFullLeaderboard(): Promise<DashboardData> {
     students: studentsResult.data || [],
     assignments: assignmentsResult.data || [],
     grades: gradesResult.data || [],
-    feedback: feedbackResult.data || []
+    feedback: feedbackResult.data || [],
+    badges: hardcodedBadges,
+    userBadges: hardcodedUserBadges
   }
 }
 
@@ -60,7 +77,9 @@ async function getAnonymizedLeaderboard(currentUsername?: string): Promise<Dashb
       students: [],
       assignments: [],
       grades: [],
-      feedback: []
+      feedback: [],
+      badges: [],
+      userBadges: []
     }
   }
 
@@ -73,7 +92,7 @@ async function getAnonymizedLeaderboard(currentUsername?: string): Promise<Dashb
     // Get ALL grades for leaderboard
     supabase.from('consolidated_grades').select('*').order('github_username'),
     // Get privacy preferences to filter feedback visibility
-    supabase.from('zzz_user_privacy').select('github_username, show_real_name')
+    supabase.from('zzz_user_privacy').select('github_username, show_real_name'),
   ])
 
   if (studentsResult.error) {
@@ -119,7 +138,9 @@ async function getAnonymizedLeaderboard(currentUsername?: string): Promise<Dashb
     students: studentsResult.data || [],
     assignments: assignmentsResult.data || [],
     grades: gradesResult.data || [],
-    feedback: filteredFeedback
+    feedback: filteredFeedback,
+    badges: hardcodedBadges,
+    userBadges: hardcodedUserBadges
   }
 }
 

@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps */
-'use client'
+  'use client'
 
 import { useState, useMemo, useEffect, Fragment } from 'react'
 import { useSession } from 'next-auth/react'
@@ -14,27 +13,32 @@ import LOTRAvatar from './LOTRAvatar'
 import { useNamePreference } from '@/contexts/NamePreferenceContext'
 import { useTranslations } from 'next-intl'
 import { filterValidGrades, calculateGradePercentage } from '@/utils/gradeFilters'
+import { Badge, UserBadge } from '@/types/badges'
+import BadgeList from './BadgeList'
 
 interface StudentsTableProps {
-  students: Student[]
-  assignments: Assignment[]
-  grades: ConsolidatedGrade[]
-  feedback: StudentFeedback[]
-  showRealNames?: boolean
-  averageGrade: number // Added averageGrade prop
+  readonly students: Student[]
+  readonly assignments: Assignment[]
+  readonly grades: ConsolidatedGrade[]
+  readonly feedback: StudentFeedback[]
+  readonly showRealNames?: boolean
+  readonly averageGrade: number // Added averageGrade prop
+  readonly badges: Badge[]
+  readonly userBadges: UserBadge[]
 }
 
 type SortField = 'github_username' | 'assignment_name' | 'points_awarded' | 'points_available' | 'percentage'
 type SortDirection = 'asc' | 'desc'
 
-export default function StudentsTable({ assignments, grades, feedback, showRealNames = true, averageGrade }: StudentsTableProps) {
+export default function StudentsTable({ assignments, grades, feedback, showRealNames = true, averageGrade, badges, userBadges }: StudentsTableProps) {
   const { data: session } = useSession()
   const { showRealName } = useNamePreference()
   const t = useTranslations('table')
 
   // KISS: Extract user info once
-  const isAdmin = (session?.user as any)?.role === 'administrator'
-  const currentUsername = (session?.user as any)?.githubUsername
+  const sessionUser = session?.user as { githubUsername: string; role: 'administrator' | 'dev' } | undefined
+  const isAdmin = sessionUser?.role === 'administrator'
+  const currentUsername = sessionUser?.githubUsername
 
   // Filter valid grades using centralized business logic
   const validGrades = filterValidGrades(grades)
@@ -190,7 +194,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
 
     // Filter by assignment
     if (selectedAssignment) {
-      filtered = filtered.filter(grade => 
+      filtered = filtered.filter(grade =>
         grade.assignment_name === selectedAssignment
       )
     }
@@ -292,14 +296,14 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
               </div>
             </div>
           )}
-          
+
           {/* Search and Filter Controls */}
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Search */}
             <div className="relative flex-1">
-              <MagnifyingGlass 
-                size={20} 
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" 
+              <MagnifyingGlass
+                size={20}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
               />
               <input
                 type="text"
@@ -395,6 +399,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
               const assignmentFeedback = getFeedbackForAssignment(grade.github_username, grade.assignment_name)
               const hasFeedback = assignmentFeedback.length > 0
               const isExpanded = expandedRows.has(rowKey)
+              const studentUserBadges = userBadges.filter(ub => ub.user_id === grade.github_username)
 
               // Determine comparison with average
               let averageComparison = ''
@@ -420,9 +425,8 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
               return (
                 <Fragment key={rowKey}>
                   <tr
-                    className={`hover:bg-gray-50 transition-colors duration-200 ${
-                      isSearchedUser ? 'bg-amber-50 border-l-4 border-amber-500 shadow-sm' : ''
-                    } ${isCurrentUser ? 'bg-blue-50 border-l-4 border-blue-500 shadow-sm' : ''} ${hasFeedback ? 'cursor-pointer' : ''}`}
+                    className={`hover:bg-gray-50 transition-colors duration-200 ${isSearchedUser ? 'bg-amber-50 border-l-4 border-amber-500 shadow-sm' : ''
+                      } ${isCurrentUser ? 'bg-blue-50 border-l-4 border-blue-500 shadow-sm' : ''} ${hasFeedback ? 'cursor-pointer' : ''}`}
                     onClick={hasFeedback ? () => toggleRowExpanded(rowKey) : undefined}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -455,6 +459,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
                           <div className="text-xs text-gray-500 italic">
                             {description}
                           </div>
+                          <BadgeList badges={badges} userBadges={studentUserBadges} />
                         </div>
                       </div>
                     </td>
@@ -488,12 +493,11 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
                           {/* Barra de progreso */}
                           <div className="w-16 bg-gray-200 rounded-full h-2">
                             <div
-                              className={`h-2 rounded-full transition-all duration-300 ${
-                                percentage >= 80 ? 'bg-green-500' :
-                                percentage >= 60 ? 'bg-yellow-500' :
-                                percentage >= 40 ? 'bg-orange-500' : 'bg-red-500'
-                              }`}
-                              style={{width: `${Math.min(percentage, 100)}%`}}
+                              className={`h-2 rounded-full transition-all duration-300 ${percentage >= 80 ? 'bg-green-500' :
+                                  percentage >= 60 ? 'bg-yellow-500' :
+                                    percentage >= 40 ? 'bg-orange-500' : 'bg-red-500'
+                                }`}
+                              style={{ width: `${Math.min(percentage, 100)}%` }}
                             ></div>
                           </div>
                           {/* Porcentaje con pill */}
@@ -538,14 +542,14 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
         </table>
       </div>
 
-       {/* Footer */}
-       <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-xl">
-         <div className="flex items-center justify-center text-sm text-gray-600">
-           <span>
-             {t('showing')} {filteredAndSortedGrades.length} {t('of')} {validGrades.length} {t('records')}
-           </span>
-         </div>
-       </div>
+      {/* Footer */}
+      <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-xl">
+        <div className="flex items-center justify-center text-sm text-gray-600">
+          <span>
+            {t('showing')} {filteredAndSortedGrades.length} {t('of')} {validGrades.length} {t('records')}
+          </span>
+        </div>
+      </div>
     </div>
   )
 }
