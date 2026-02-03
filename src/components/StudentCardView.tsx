@@ -22,6 +22,8 @@ interface StudentCardViewProps {
   getFeedbackForAssignment: (username: string, assignmentName: string) => StudentFeedback[]
   toggleRowExpanded: (rowKey: string) => void
   expandedRows: Set<string>
+  getGradeColor: (percentage: number) => string; // Added prop
+  getGradeBgColor: (percentage: number) => string; // Added prop
 }
 
 const StudentCardView: React.FC<StudentCardViewProps> = ({
@@ -111,11 +113,11 @@ const StudentCardView: React.FC<StudentCardViewProps> = ({
                     size="md"
                     className="mr-3"
                   />
-                  <div>
-                    <div className="text-base font-semibold text-gray-900">
+                  <div className="min-w-0">
+                    <div className="text-base font-semibold text-gray-900 truncate">
                       {displayName}
                     </div>
-                    <div className="text-xs text-gray-500 italic">
+                    <div className="text-xs text-gray-500 italic truncate">
                       {description}
                     </div>
                   </div>
@@ -132,7 +134,7 @@ const StudentCardView: React.FC<StudentCardViewProps> = ({
                 <h4 className="text-sm font-medium text-gray-700 mb-1">
                   {t('challenge')}:
                 </h4>
-                <p className="text-base font-semibold text-gray-900">
+                <p className="text-base font-semibold text-gray-900 truncate">
                   {grade.assignment_name}
                 </p>
               </div>
@@ -185,7 +187,7 @@ const StudentCardView: React.FC<StudentCardViewProps> = ({
                   {assignmentFeedback.map((fb, fbIndex) => (
                     <div key={fbIndex} className="bg-white border border-amber-200 rounded-lg p-4 shadow-sm">
                       <p className="text-sm text-gray-700 whitespace-pre-wrap">{fb.feedback_for_student}</p>
-                      <p className="text-xs text-gray-500 mt-2 italic">
+                      <p className="text-xs text-gray-500 mt-2 italic truncate">
                         — {fb.reviewer_username}
                       </p>
                     </div>

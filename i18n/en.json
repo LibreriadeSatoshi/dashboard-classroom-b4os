@@ -59,7 +59,8 @@
     "records": "records",
     "points": "pts",
     "feedback": "Feedback",
-    "tutorFeedback": "Tutor Feedback"
+    "tutorFeedback": "Tutor Feedback",
+    "modeView": "Mode View"
   },
   "auth": {
     "signIn": "Sign In",

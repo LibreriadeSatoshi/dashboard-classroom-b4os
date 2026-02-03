@@ -351,27 +351,23 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
               </div>
             </div>
 
-            {/* View Toggle */}
-            <div className="flex-shrink-0 flex border border-gray-300 rounded-lg overflow-hidden">
-              <button
-                onClick={() => handleViewToggle('table')}
-                className={`px-4 py-2 flex items-center gap-2 text-sm font-medium ${
-                  viewMode === 'table' ? 'bg-amber-500 text-white' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                } transition-colors duration-200`}
-              >
-                <Table size={20} />
-                {t('tableView')}
-              </button>
-              <button
-                onClick={() => handleViewToggle('card')}
-                className={`px-4 py-2 flex items-center gap-2 text-sm font-medium ${
-                  viewMode === 'card' ? 'bg-amber-500 text-white' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                } transition-colors duration-200`}
-              >
-                <Cards size={20} />
-                {t('cardView')}
-              </button>
-            </div>
+            {/* View Toggle Switch */}
+            <label htmlFor="view-toggle" className="flex items-center cursor-pointer">
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  id="view-toggle"
+                  className="sr-only"
+                  checked={viewMode === 'card'}
+                  onChange={() => handleViewToggle(viewMode === 'table' ? 'card' : 'table')}
+                />
+                <div className={`block w-16 h-8 rounded-full transition-colors duration-300 ${viewMode === 'card' ? 'bg-amber-500' : 'bg-gray-300'}`}></div>
+                <div className={`absolute left-1 top-1 w-6 h-6 rounded-full transition-transform duration-300 flex items-center justify-center ${viewMode === 'card' ? 'bg-white' : 'bg-white'}`}
+                     style={{ transform: viewMode === 'card' ? 'translateX(100%)' : 'translateX(0)' }}>
+                  <Crown size={20} className={`${viewMode === 'card' ? 'text-amber-500' : 'text-gray-500'}`} />
+                </div>
+              </div>
+            </label>
           </div>
         </div>
       </div>
@@ -598,6 +594,8 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
           getFeedbackForAssignment={getFeedbackForAssignment}
           toggleRowExpanded={toggleRowExpanded}
           expandedRows={expandedRows}
+          getGradeColor={getGradeColor} // Pass the function
+          getGradeBgColor={getGradeBgColor} // Pass the function
         />
       )}
 
