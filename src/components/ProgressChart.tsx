@@ -30,7 +30,7 @@ const ProgressChart: React.FC<ProgressChartProps> = ({ data }) => {
           <YAxis stroke="#666" domain={[0, 100]} />
           <Tooltip
             formatter={(value: number | undefined) => value !== undefined ? [`${value.toFixed(2)}%`, ''] : ['N/A', '']}
-            labelFormatter={(label: string) => `Semana: ${label}`}
+            labelFormatter={(label: React.ReactNode) => `Semana: ${String(label)}`}
             contentStyle={{
               backgroundColor: 'rgba(255, 255, 255, 0.9)',
               border: '1px solid #ccc',

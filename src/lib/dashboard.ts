@@ -5,7 +5,7 @@ import { authOptions } from './auth-config'
 import type { Student, Assignment, ConsolidatedGrade, StudentFeedback } from './supabase'
 
 const supabaseUrl = process.env.SUPABASE_URL || ''
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+const supabaseServiceRoleKey = process.env.SUPABASE_ANON_KEY || ''
 
 // Create Supabase client for server-side operations using service role key to bypass RLS
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
@@ -25,6 +25,22 @@ export interface WeeklyProgress {
 
 // Helper function to get weekly progress data for a student and class average
 export async function getWeeklyProgressData(githubUsername: string): Promise<WeeklyProgress[]> {
+  // --- START HARDCODED DATA FOR DEMONSTRATION ---
+  // This section provides sample data for the Weekly Progress Chart.
+  // In a production environment, this data would be dynamically fetched from a database.
+  const hardcodedWeeklyProgress: WeeklyProgress[] = [
+    { weekLabel: 'Week 1', studentScore: 75, classAverage: 70 },
+    { weekLabel: 'Week 2', studentScore: 80, classAverage: 72 },
+    { weekLabel: 'Week 3', studentScore: 70, classAverage: 75 },
+    { weekLabel: 'Week 4', studentScore: 85, classAverage: 78 },
+    { weekLabel: 'Week 5', studentScore: 90, classAverage: 80 },
+    { weekLabel: 'Week 6', studentScore: 88, classAverage: 82 },
+  ];
+  return Promise.resolve(hardcodedWeeklyProgress);
+  // --- END HARDCODED DATA FOR DEMONSTRATION ---
+
+  /*
+  // Original logic for fetching data from Supabase (commented out for demonstration)
   const sixWeeksAgo = new Date()
   sixWeeksAgo.setDate(sixWeeksAgo.getDate() - (6 * 7)) // Go back 6 weeks
 
@@ -110,6 +126,7 @@ export async function getWeeklyProgressData(githubUsername: string): Promise<Wee
     })
 
   return result
+  */
 }
 
 // Helper function to get week number (ISO week date)
