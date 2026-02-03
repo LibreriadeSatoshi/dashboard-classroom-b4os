@@ -4,7 +4,8 @@
 import { useState, useMemo, useEffect, Fragment } from 'react'
 import { useSession } from 'next-auth/react'
 import { type Student, type Assignment, type ConsolidatedGrade, type StudentFeedback } from '@/lib/supabase'
-import { MagnifyingGlass, Funnel, CaretUp, CaretDown, Crown, ChatCircleText, CaretRight } from 'phosphor-react'
+import { MagnifyingGlass, Funnel, CaretUp, CaretDown, Crown, ChatCircleText, CaretRight, Table, Cards } from 'phosphor-react'
+import StudentCardView from './StudentCardView' // Import the new card view component
 import {
   generateAnonymousId,
   findUserByRealUsername,
@@ -45,6 +46,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [userPreferences, setUserPreferences] = useState<Record<string, boolean>>({})
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
+  const [viewMode, setViewMode] = useState<'table' | 'card'>('table'); // New state for view mode
 
   // Helper to get feedback for a specific assignment
   const getFeedbackForAssignment = (username: string, assignmentName: string) => {
@@ -80,8 +82,11 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
         const data = await response.json()
 
         const preferences: Record<string, boolean> = {}
-        data.preferences?.forEach((pref: { github_username: string; show_real_name: boolean }) => {
+        data.preferences?.forEach((pref: { github_username: string; show_real_name: boolean; student_view_mode?: 'table' | 'card' }) => {
           preferences[pref.github_username] = pref.show_real_name
+          if (pref.student_view_mode) {
+            setViewMode(pref.student_view_mode)
+          }
         })
         setUserPreferences(preferences)
       } catch (error) {
@@ -113,8 +118,11 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
         const data = await response.json()
 
         const preferences: Record<string, boolean> = {}
-        data.preferences?.forEach((pref: { github_username: string; show_real_name: boolean }) => {
+        data.preferences?.forEach((pref: { github_username: string; show_real_name: boolean; student_view_mode?: 'table' | 'card' }) => {
           preferences[pref.github_username] = pref.show_real_name
+          if (pref.student_view_mode) {
+            setViewMode(pref.student_view_mode)
+          }
         })
         setUserPreferences(preferences)
       } catch (error) {
@@ -124,6 +132,19 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
 
     loadAllUserPreferences()
   }, [session?.user, showRealName]) // Reload when session or current user's preference changes
+
+  const handleViewToggle = async (mode: 'table' | 'card') => {
+    setViewMode(mode);
+    try {
+      await fetch('/api/user-preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ student_view_mode: mode }),
+      });
+    } catch (error) {
+      console.error('Error saving view preference:', error);
+    }
+  };
 
   // Display name based on role and privacy preference
   const getDisplayName = (githubUsername: string) => {
@@ -293,250 +314,290 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
             </div>
           )}
           
-          {/* Search and Filter Controls */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search */}
-            <div className="relative flex-1">
-              <MagnifyingGlass 
-                size={20} 
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" 
-              />
-              <input
-                type="text"
-                placeholder={isAdmin ? t('searchPlaceholderAdmin') : t('searchPlaceholderDev')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200"
-              />
+          {/* Search, Filter Controls and View Toggle */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
+            {/* Search and Filter */}
+            <div className="flex flex-col sm:flex-row gap-4 flex-grow">
+              {/* Search */}
+              <div className="relative flex-1">
+                <MagnifyingGlass 
+                  size={20} 
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" 
+                />
+                <input
+                  type="text"
+                  placeholder={isAdmin ? t('searchPlaceholderAdmin') : t('searchPlaceholderDev')}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all duration-200"
+                />
+              </div>
+
+              {/* Assignment Filter */}
+              <div className="relative">
+                <Funnel size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <select
+                  value={selectedAssignment}
+                  onChange={(e) => setSelectedAssignment(e.target.value)}
+                  className="pl-10 pr-8 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 appearance-none min-w-[200px] transition-all duration-200"
+                >
+                  <option value="">{t('allAdventures')}</option>
+                  {assignments.map(assignment => (
+                    <option key={assignment.id} value={assignment.name}>
+                      {assignment.name} ({assignment.points_available} {t('points')})
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            {/* Assignment Filter */}
-            <div className="relative">
-              <Funnel size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <select
-                value={selectedAssignment}
-                onChange={(e) => setSelectedAssignment(e.target.value)}
-                className="pl-10 pr-8 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 appearance-none min-w-[200px] transition-all duration-200"
-              >
-                <option value="">{t('allAdventures')}</option>
-                {assignments.map(assignment => (
-                  <option key={assignment.id} value={assignment.name}>
-                    {assignment.name} ({assignment.points_available} {t('points')})
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* View Toggle Switch */}
+            <label htmlFor="view-toggle" className="flex items-center cursor-pointer">
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  id="view-toggle"
+                  className="sr-only"
+                  checked={viewMode === 'card'}
+                  onChange={() => handleViewToggle(viewMode === 'table' ? 'card' : 'table')}
+                />
+                <div className={`block w-16 h-8 rounded-full transition-colors duration-300 ${viewMode === 'card' ? 'bg-amber-500' : 'bg-gray-300'}`}></div>
+                <div className={`absolute left-1 top-1 w-6 h-6 rounded-full transition-transform duration-300 flex items-center justify-center ${viewMode === 'card' ? 'bg-white' : 'bg-white'}`}
+                     style={{ transform: viewMode === 'card' ? 'translateX(100%)' : 'translateX(0)' }}>
+                  <Crown size={20} className={`${viewMode === 'card' ? 'text-amber-500' : 'text-gray-500'}`} />
+                </div>
+              </div>
+            </label>
           </div>
         </div>
-
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('github_username')}
-              >
-                <div className="flex items-center gap-2">
-                  <Crown className="h-4 w-4 text-amber-500" />
-                  {t('inhabitant')}
-                  {getSortIcon('github_username')}
-                </div>
-              </th>
-              <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('assignment_name')}
-              >
-                <div className="flex items-center gap-2">
-                  {t('challenge')}
-                  {getSortIcon('assignment_name')}
-                </div>
-              </th>
-              <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('points_awarded')}
-              >
-                <div className="flex items-center gap-2">
-                  {t('pointsAwarded')}
-                  {getSortIcon('points_awarded')}
-                </div>
-              </th>
-              <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('points_available')}
-              >
-                <div className="flex items-center gap-2">
-                  {t('pointsAvailable')}
-                  {getSortIcon('points_available')}
-                </div>
-              </th>
-              <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('percentage')}
-              >
-                <div className="flex items-center gap-2">
-                  {t('percentage')}
-                  {getSortIcon('percentage')}
-                </div>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {filteredAndSortedGrades.map((grade, index) => {
-              const percentage = calculateGradePercentage(grade.points_awarded || 0, grade.points_available || 0)
-              const displayName = getDisplayName(grade.github_username)
-              const description = getDisplayDescription(grade.github_username)
-              const isSearchedUser = searchedUserInfo?.realUsername.toLowerCase() === grade.github_username.toLowerCase()
-              const isCurrentUser = currentUsername === grade.github_username && !isAdmin // Identify current student
-              const rowKey = `${grade.github_username}-${grade.assignment_name}-${index}`
-              const assignmentFeedback = getFeedbackForAssignment(grade.github_username, grade.assignment_name)
-              const hasFeedback = assignmentFeedback.length > 0
-              const isExpanded = expandedRows.has(rowKey)
+      {/* Conditional Rendering of Table or Card View */}
+      {viewMode === 'table' ? (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('github_username')}
+                >
+                  <div className="flex items-center gap-2">
+                    <Crown className="h-4 w-4 text-amber-500" />
+                    {t('inhabitant')}
+                    {getSortIcon('github_username')}
+                  </div>
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('assignment_name')}
+                >
+                  <div className="flex items-center gap-2">
+                    {t('challenge')}
+                    {getSortIcon('assignment_name')}
+                  </div>
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('points_awarded')}
+                >
+                  <div className="flex items-center gap-2">
+                    {t('pointsAwarded')}
+                    {getSortIcon('points_awarded')}
+                  </div>
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('points_available')}
+                >
+                  <div className="flex items-center gap-2">
+                    {t('pointsAvailable')}
+                    {getSortIcon('points_available')}
+                  </div>
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('percentage')}
+                >
+                  <div className="flex items-center gap-2">
+                    {t('percentage')}
+                    {getSortIcon('percentage')}
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filteredAndSortedGrades.map((grade, index) => {
+                const percentage = calculateGradePercentage(grade.points_awarded || 0, grade.points_available || 0)
+                const displayName = getDisplayName(grade.github_username)
+                const description = getDisplayDescription(grade.github_username)
+                const isSearchedUser = searchedUserInfo?.realUsername.toLowerCase() === grade.github_username.toLowerCase()
+                const isCurrentUser = currentUsername === grade.github_username && !isAdmin // Identify current student
+                const rowKey = `${grade.github_username}-${grade.assignment_name}-${index}`
+                const assignmentFeedback = getFeedbackForAssignment(grade.github_username, grade.assignment_name)
+                const hasFeedback = assignmentFeedback.length > 0
+                const isExpanded = expandedRows.has(rowKey)
 
-              // Determine comparison with average
-              let averageComparison = ''
-              let comparisonIcon = null
-              let comparisonColor = ''
+                // Determine comparison with average
+                let averageComparison = ''
+                let comparisonIcon = null
+                let comparisonColor = ''
 
-              if (isCurrentUser) {
-                if (percentage > averageGrade) {
-                  averageComparison = t('aboveAverage')
-                  comparisonIcon = <CaretUp size={14} className="text-green-500" />
-                  comparisonColor = 'text-green-700'
-                } else if (percentage < averageGrade) {
-                  averageComparison = t('belowAverage')
-                  comparisonIcon = <CaretDown size={14} className="text-red-500" />
-                  comparisonColor = 'text-red-700'
-                } else {
-                  averageComparison = t('onPar')
-                  comparisonIcon = <CaretRight size={14} className="text-gray-500" />
-                  comparisonColor = 'text-gray-700'
+                if (isCurrentUser) {
+                  if (percentage > averageGrade) {
+                    averageComparison = t('aboveAverage')
+                    comparisonIcon = <CaretUp size={14} className="text-green-500" />
+                    comparisonColor = 'text-green-700'
+                  } else if (percentage < averageGrade) {
+                    averageComparison = t('belowAverage')
+                    comparisonIcon = <CaretDown size={14} className="text-red-500" />
+                    comparisonColor = 'text-red-700'
+                  } else {
+                    averageComparison = t('onPar')
+                    comparisonIcon = <CaretRight size={14} className="text-gray-500" />
+                    comparisonColor = 'text-gray-700'
+                  }
                 }
-              }
 
-              return (
-                <Fragment key={rowKey}>
-                  <tr
-                    className={`hover:bg-gray-50 transition-colors duration-200 ${
-                      isSearchedUser ? 'bg-amber-50 border-l-4 border-amber-500 shadow-sm' : ''
-                    } ${isCurrentUser ? 'bg-blue-50 border-l-4 border-blue-500 shadow-sm' : ''} ${hasFeedback ? 'cursor-pointer' : ''}`}
-                    onClick={hasFeedback ? () => toggleRowExpanded(rowKey) : undefined}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          <LOTRAvatar
-                            githubUsername={grade.github_username}
-                            size="lg"
-                            className="transition-transform duration-200 hover:scale-110"
-                          />
-                        </div>
-                        <div className="ml-3">
-                          <div className="flex items-center gap-2">
-                            <div className="text-sm font-medium text-gray-900">
-                              {displayName}
+                return (
+                  <Fragment key={rowKey}>
+                    <tr
+                      className={`hover:bg-gray-50 transition-colors duration-200 ${
+                        isSearchedUser ? 'bg-amber-50 border-l-4 border-amber-500 shadow-sm' : ''
+                      } ${isCurrentUser ? 'bg-blue-50 border-l-4 border-blue-500 shadow-sm' : ''} ${hasFeedback ? 'cursor-pointer' : ''}`}
+                      onClick={hasFeedback ? () => toggleRowExpanded(rowKey) : undefined}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0">
+                            <LOTRAvatar
+                              githubUsername={grade.github_username}
+                              size="lg"
+                              className="transition-transform duration-200 hover:scale-110"
+                            />
+                          </div>
+                          <div className="ml-3">
+                            <div className="flex items-center gap-2">
+                              <div className="text-sm font-medium text-gray-900">
+                                {displayName}
+                              </div>
+                              {isSearchedUser && (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                                  <Crown className="h-3 w-3 mr-1" />
+                                  {t('itsYou')}
+                                </span>
+                              )}
+                              {isCurrentUser && ( // New indicator for current user
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                                  <Crown className="h-3 w-3 mr-1" />
+                                  {t('yourPosition')}
+                                </span>
+                              )}
                             </div>
-                            {isSearchedUser && (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
-                                <Crown className="h-3 w-3 mr-1" />
-                                {t('itsYou')}
-                              </span>
-                            )}
-                            {isCurrentUser && ( // New indicator for current user
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                                <Crown className="h-3 w-3 mr-1" />
-                                {t('yourPosition')}
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-xs text-gray-500 italic">
-                            {description}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">
-                          {grade.assignment_name}
-                        </span>
-                        {hasFeedback && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">
-                            <ChatCircleText className="h-3 w-3" />
-                            {t('feedback')}
-                            <CaretRight className={`h-3 w-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {grade.points_awarded || 0}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-600">
-                        {grade.points_available || 0}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 break-word">
-                      <div className="flex flex-col items-start gap-1"> {/* Changed to flex-col for better mobile display */}
-                        <div className="flex items-center gap-3">
-                          {/* Barra de progreso */}
-                          <div className="w-16 bg-gray-200 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full transition-all duration-300 ${
-                                percentage >= 80 ? 'bg-green-500' :
-                                percentage >= 60 ? 'bg-yellow-500' :
-                                percentage >= 40 ? 'bg-orange-500' : 'bg-red-500'
-                              }`}
-                              style={{width: `${Math.min(percentage, 100)}%`}}
-                            ></div>
-                          </div>
-                          {/* Porcentaje con pill */}
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getGradeBgColor(percentage)} ${getGradeColor(percentage)}`}>
-                            {percentage}%
-                          </span>
-                        </div>
-                        {isCurrentUser && averageComparison && ( // Display comparison for current user
-                          <div className={`flex items-center gap-1 text-xs font-medium ${comparisonColor}`}>
-                            {comparisonIcon}
-                            {averageComparison} ({t('classAverage')}: {averageGrade}%)
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                  {/* Expanded feedback row */}
-                  {hasFeedback && isExpanded && (
-                    <tr key={`${rowKey}-feedback`} className="bg-amber-50">
-                      <td colSpan={5} className="px-6 py-4">
-                        <div className="ml-12 space-y-3">
-                          <div className="flex items-center gap-2 text-sm font-medium text-amber-800">
-                            <ChatCircleText className="h-4 w-4" />
-                            {t('tutorFeedback')}
-                          </div>
-                          {assignmentFeedback.map((fb, fbIndex) => (
-                            <div key={fbIndex} className="bg-white border border-amber-200 rounded-lg p-4 shadow-sm">
-                              <p className="text-sm text-gray-700 whitespace-pre-wrap">{fb.feedback_for_student}</p>
-                              <p className="text-xs text-gray-500 mt-2 italic">
-                                — {fb.reviewer_username}
-                              </p>
+                            <div className="text-xs text-gray-500 italic">
+                              {description}
                             </div>
-                          ))}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-600">
+                            {grade.assignment_name}
+                          </span>
+                          {hasFeedback && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">
+                              <ChatCircleText className="h-3 w-3" />
+                              {t('feedback')}
+                              <CaretRight className={`h-3 w-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {grade.points_awarded || 0}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-600">
+                          {grade.points_available || 0}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 break-word">
+                        <div className="flex flex-col items-start gap-1"> {/* Changed to flex-col for better mobile display */}
+                          <div className="flex items-center gap-3">
+                            {/* Barra de progreso */}
+                            <div className="w-16 bg-gray-200 rounded-full h-2">
+                              <div
+                                className={`h-2 rounded-full transition-all duration-300 ${
+                                  percentage >= 80 ? 'bg-green-500' :
+                                  percentage >= 60 ? 'bg-yellow-500' :
+                                  percentage >= 40 ? 'bg-orange-500' : 'bg-red-500'
+                                }`}
+                                style={{width: `${Math.min(percentage, 100)}%`}}
+                              ></div>
+                            </div>
+                            {/* Porcentaje con pill */}
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getGradeBgColor(percentage)} ${getGradeColor(percentage)}`}>
+                              {percentage}%
+                            </span>
+                          </div>
+                          {isCurrentUser && averageComparison && ( // Display comparison for current user
+                            <div className={`flex items-center gap-1 text-xs font-medium ${comparisonColor}`}>
+                              {comparisonIcon}
+                              {averageComparison} ({t('classAverage')}: {averageGrade}%)
+                            </div>
+                          )}
                         </div>
                       </td>
                     </tr>
-                  )}
-                </Fragment>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+                    {/* Expanded feedback row */}
+                    {hasFeedback && isExpanded && (
+                      <tr key={`${rowKey}-feedback`} className="bg-amber-50">
+                        <td colSpan={5} className="px-6 py-4">
+                          <div className="ml-12 space-y-3">
+                            <div className="flex items-center gap-2 text-sm font-medium text-amber-800">
+                              <ChatCircleText className="h-4 w-4" />
+                              {t('tutorFeedback')}
+                            </div>
+                            {assignmentFeedback.map((fb, fbIndex) => (
+                              <div key={fbIndex} className="bg-white border border-amber-200 rounded-lg p-4 shadow-sm">
+                                <p className="text-sm text-gray-700 whitespace-pre-wrap">{fb.feedback_for_student}</p>
+                                <p className="text-xs text-gray-500 mt-2 italic">
+                                  — {fb.reviewer_username}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <StudentCardView
+          grades={filteredAndSortedGrades}
+          assignments={assignments}
+          feedback={feedback}
+          showRealNames={showRealNames}
+          averageGrade={averageGrade}
+          isAdmin={isAdmin}
+          currentUsername={currentUsername}
+          userPreferences={userPreferences}
+          getDisplayName={getDisplayName}
+          getDisplayDescription={getDisplayDescription}
+          getFeedbackForAssignment={getFeedbackForAssignment}
+          toggleRowExpanded={toggleRowExpanded}
+          expandedRows={expandedRows}
+          getGradeColor={getGradeColor} // Pass the function
+          getGradeBgColor={getGradeBgColor} // Pass the function
+        />
+      )}
 
        {/* Footer */}
        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-xl">
