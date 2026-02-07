@@ -56,7 +56,7 @@ const FeedbackDropdown = ({ isOpen, onClose, onFeedbackRead }: FeedbackDropdownP
   return (
     <>
       {/* Backdrop to close dropdown when clicking outside */}
-      <div className="fixed inset-0 z-10" onClick={onClose} />
+      <div className="fixed inset-0 z-10" onClick={onClose} aria-hidden="true" />
       
       <div className="absolute right-0 left-auto top-full mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-20">
         <div className="flex justify-between items-center p-3 border-b border-gray-200">
