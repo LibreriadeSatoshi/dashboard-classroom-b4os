@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { type Student, type Assignment, type ConsolidatedGrade, type StudentFeedback } from '@/lib/supabase'
+import { Feedback } from '@/lib/feedback'
 import { Users, Crown, Sword, Shield } from 'phosphor-react'
 import StatsCard from '@/components/StatsCard'
 import StudentsTable from '@/components/StudentsTable'
@@ -26,6 +27,19 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   const { showRealName } = useNamePreference()
   const t = useTranslations('dashboard')
   const tc = useTranslations('common')
+
+  // Transform StudentFeedback to Feedback format (only completed feedback)
+  // Note: Some records may have id:null - logs added to track this issue
+  const feedbackList: Feedback[] = feedback
+    .filter((fb): fb is StudentFeedback & { status: 'completed' } => fb.status === 'completed' && !!fb.feedback_for_student)
+    .map(fb => ({
+      id: `reviewer-${fb.id}`,
+      studentId: fb.student_username,
+      content: fb.feedback_for_student!,
+      read: false,
+      createdAt: fb.completed_at || new Date().toISOString()
+    }))
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
   // State for feedback dropdown
   const [isFeedbackDropdownOpen, setFeedbackDropdownOpen] = useState(false)
@@ -75,6 +89,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         onFeedbackClick={handleToggleFeedbackDropdown}
         onFeedbackRead={handleFeedbackRead}
         onCloseFeedback={handleToggleFeedbackDropdown}
+        initialFeedback={feedbackList}
       />
       <div className="min-h-screen bg-slate-900 text-white relative overflow-hidden">
       {/* Epic LOTR Background */}

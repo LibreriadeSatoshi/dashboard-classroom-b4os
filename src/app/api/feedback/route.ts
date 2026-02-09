@@ -67,17 +67,42 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Feedback ID is required' }, { status: 400 });
   }
 
+  console.log('Marking feedback as read:', { feedbackId });
+
   const supabase = createClient();
   const githubUsername = session.user.name;
 
   // Parse composite ID "reviewer-123" or "comment-uuid"
   const [source, id] = feedbackId.split('-');
+  console.log('Parsed feedback ID:', { source, id, feedbackId });
+  
+  if (!source || !id) {
+    console.error('Invalid feedback ID format:', feedbackId);
+    return NextResponse.json({ error: 'Invalid feedback ID format' }, { status: 400 });
+  }
+
   const table = source === 'reviewer'
     ? TABLE_NAMES.STUDENT_REVIEWERS
     : TABLE_NAMES.REVIEW_COMMENTS;
 
   // For reviewer table, id is int. For comments table, id is UUID (string)
-  const idValue = source === 'reviewer' ? Number.parseInt(id) : id;
+  let idValue: number | string;
+  if (source === 'reviewer') {
+    const parsedId = Number.parseInt(id, 10);
+    console.log('Parsed idValue:', { parsedId, id, source, isNaN: Number.isNaN(parsedId) });
+
+    // Handle null/invalid id case - log and return success
+    if (Number.isNaN(parsedId) || !Number.isFinite(parsedId)) {
+      console.warn('Feedback with null/invalid id detected:', { feedbackId, id, student_username: githubUsername });
+      return NextResponse.json({
+        success: true,
+        message: 'Feedback noted (invalid id - requires DB fix)'
+      });
+    }
+    idValue = parsedId;
+  } else {
+    idValue = id;
+  }
 
   const { error } = await supabase
     .from(table)

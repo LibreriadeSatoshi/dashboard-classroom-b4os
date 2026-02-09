@@ -10,6 +10,7 @@ import { useTranslations, useLocale } from 'next-intl'
 import LanguageSwitcher from './LanguageSwitcher'
 import FeedbackBell from './FeedbackBell'
 import FeedbackDropdown from './FeedbackDropdown'
+import { Feedback } from '@/lib/feedback'
 
 interface HeaderProps {
   readonly hasUnreadFeedback: boolean;
@@ -17,9 +18,10 @@ interface HeaderProps {
   readonly onFeedbackClick: () => void;
   readonly onFeedbackRead: () => void;
   readonly onCloseFeedback: () => void;
+  readonly initialFeedback?: Feedback[];
 }
 
-export default function Header({ hasUnreadFeedback, isFeedbackOpen, onFeedbackClick, onFeedbackRead, onCloseFeedback }: Readonly<HeaderProps>) {
+export default function Header({ hasUnreadFeedback, isFeedbackOpen, onFeedbackClick, onFeedbackRead, onCloseFeedback, initialFeedback }: Readonly<HeaderProps>) {
   const { data: session } = useSession()
   const [showDropdown, setShowDropdown] = useState(false)
   const { showRealName, setShowRealName, loading } = useNamePreference()
@@ -57,6 +59,7 @@ export default function Header({ hasUnreadFeedback, isFeedbackOpen, onFeedbackCl
               isOpen={isFeedbackOpen}
               onClose={onCloseFeedback}
               onFeedbackRead={onFeedbackRead}
+              initialFeedback={initialFeedback || []}
             />
           </div>
 

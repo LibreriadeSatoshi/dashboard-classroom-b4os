@@ -1,41 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Feedback, getFeedback, markFeedbackAsRead } from '@/lib/feedback';
+import { useState } from 'react';
+import { Feedback, markFeedbackAsRead } from '@/lib/feedback';
 import FeedbackItem from './FeedbackItem';
 import { useTranslations } from 'next-intl';
 
 interface FeedbackDropdownProps {
   isOpen: boolean;
   onClose: () => void;
-  onFeedbackRead: () => void; // Callback to notify parent
+  onFeedbackRead: () => void;
+  initialFeedback: Feedback[];
 }
 
-const FeedbackDropdown = ({ isOpen, onClose, onFeedbackRead }: FeedbackDropdownProps) => {
-  const [feedbackList, setFeedbackList] = useState<Feedback[]>([]);
-  const [loading, setLoading] = useState(true);
+const FeedbackDropdown = ({ isOpen, onClose, onFeedbackRead, initialFeedback }: FeedbackDropdownProps) => {
+  const [feedbackList, setFeedbackList] = useState<Feedback[]>(initialFeedback);
   const [error, setError] = useState<string | null>(null);
   const t = useTranslations('feedback');
-
-  useEffect(() => {
-    if (isOpen) {
-      fetchFeedback();
-    }
-  }, [isOpen]);
-
-  const fetchFeedback = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getFeedback();
-      setFeedbackList(data);
-    } catch (err) {
-      setError(t('error_loading'));
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleMarkAsRead = async (id: string) => {
     try {
@@ -47,7 +27,6 @@ const FeedbackDropdown = ({ isOpen, onClose, onFeedbackRead }: FeedbackDropdownP
     } catch (err) {
       setError(t('error_marking_as_read'));
       console.error(err);
-      fetchFeedback(); 
     }
   };
 
@@ -55,7 +34,6 @@ const FeedbackDropdown = ({ isOpen, onClose, onFeedbackRead }: FeedbackDropdownP
 
   return (
     <>
-      {/* Backdrop to close dropdown when clicking outside */}
       <div className="fixed inset-0 z-10" onClick={onClose} aria-hidden="true" />
       
       <div className="absolute right-0 left-auto top-full mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-20">
@@ -63,12 +41,11 @@ const FeedbackDropdown = ({ isOpen, onClose, onFeedbackRead }: FeedbackDropdownP
           <h2 className="text-md font-semibold text-gray-800">{t('title')}</h2>
         </div>
         <div className="p-2 max-h-96 overflow-y-auto">
-          {loading && <p className="p-4 text-center text-gray-500">{t('loading')}</p>}
           {error && <p className="p-4 text-center text-red-500">{error}</p>}
-          {!loading && !error && feedbackList.length === 0 && (
+          {feedbackList.length === 0 && (
             <p className="p-4 text-center text-gray-500">{t('no_feedback')}</p>
           )}
-          {!loading && !error && feedbackList.length > 0 && (
+          {feedbackList.length > 0 && (
             <div className="space-y-1">
               {feedbackList.map(feedback => (
                 <FeedbackItem key={feedback.id} feedback={feedback} onMarkAsRead={handleMarkAsRead} />

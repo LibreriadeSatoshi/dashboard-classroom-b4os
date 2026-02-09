@@ -30,7 +30,9 @@ export async function markFeedbackAsRead(feedbackId: string): Promise<MarkAsRead
     body: JSON.stringify({ feedbackId }),
   });
   if (!response.ok) {
-    throw new Error('Failed to mark feedback as read');
+    const errorText = await response.text();
+    console.error('Error marking feedback as read:', { status: response.status, error: errorText, feedbackId });
+    throw new Error(`Failed to mark feedback as read: ${response.status} - ${errorText}`);
   }
   return response.json();
 }
