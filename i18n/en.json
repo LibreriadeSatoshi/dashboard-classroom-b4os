@@ -7,7 +7,11 @@
     "settings": "Settings",
     "language": "Language",
     "admin": "admin",
-    "dev": "dev"
+    "dev": "dev",
+    "yourScore": "Your Score",
+    "classAverage": "Class Average",
+    "weeklyProgressChartTitle": "Weekly Progress vs. Class Average",
+    "noWeeklyProgressData": "No weekly progress data available."
   },
   "dashboard": {
     "title": "Middle-earth Council",

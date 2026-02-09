@@ -22,9 +22,15 @@ interface DashboardClientProps {
   weeklyProgressData: WeeklyProgress[] // Added weeklyProgressData prop
 }
 
-export default function DashboardClient({ initialData, weeklyProgressData }: DashboardClientProps) {
+export default function DashboardClient({ initialData, weeklyProgressData }: Readonly<DashboardClientProps>) {
   const { students, assignments, grades, feedback } = initialData
   const { showRealName } = useNamePreference()
+
+  // Debug logs para weeklyProgressData
+  console.log('[DashboardClient] weeklyProgressData recibido:', weeklyProgressData)
+  console.log('[DashboardClient] Tipo de weeklyProgressData:', typeof weeklyProgressData)
+  console.log('[DashboardClient] ¿Es array?:', Array.isArray(weeklyProgressData))
+  console.log('[DashboardClient] Longitud de weeklyProgressData:', weeklyProgressData?.length)
   const t = useTranslations('dashboard')
   const tc = useTranslations('common')
 

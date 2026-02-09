@@ -18,8 +18,11 @@ export default async function Dashboard() {
   let dashboardData
   let weeklyProgressData: WeeklyProgress[]
   try {
+    console.log('[page.tsx] githubUsername from session:', session.user.githubUsername)
     dashboardData = await getDashboardData() // Server-side only
     weeklyProgressData = await getWeeklyProgressData(session.user.githubUsername)
+    console.log('[page.tsx] weeklyProgressData result:', weeklyProgressData)
+    console.log('[page.tsx] weeklyProgressData length:', weeklyProgressData.length)
   } catch (error) {
     console.error('Error fetching dashboard data:', error)
     // Fallback to empty data

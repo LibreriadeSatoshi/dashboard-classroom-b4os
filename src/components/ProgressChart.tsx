@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useTranslations } from 'next-intl'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts'
@@ -11,13 +12,15 @@ interface ProgressChartProps {
 }
 
 const ProgressChart: React.FC<ProgressChartProps> = ({ data }) => {
-  if (!data || data.length === 0) {
-    return <p>No hay datos de progreso semanal disponibles.</p>
+  const t = useTranslations('common')
+
+  if (!data?.length) {
+    return <p>{t('noWeeklyProgressData')}</p>
   }
 
   return (
     <div className="w-full h-80 md:h-96 bg-white p-4 rounded-lg shadow-md">
-      <h3 className="text-lg font-semibold mb-4 text-gray-800">Progreso Semanal vs. Promedio de la Clase</h3>
+      <h3 className="text-lg font-semibold mb-4 text-gray-800">{t('weeklyProgressChartTitle')}</h3>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={data}
@@ -44,7 +47,7 @@ const ProgressChart: React.FC<ProgressChartProps> = ({ data }) => {
           <Line
             type="monotone"
             dataKey="studentScore"
-            name="Tu Puntuación"
+            name={t('yourScore')}
             stroke="#8884d8"
             activeDot={{ r: 8 }}
             strokeWidth={2}
@@ -52,7 +55,7 @@ const ProgressChart: React.FC<ProgressChartProps> = ({ data }) => {
           <Line
             type="monotone"
             dataKey="classAverage"
-            name="Promedio de la Clase"
+            name={t('classAverage')}
             stroke="#82ca9d"
             strokeWidth={2}
           />

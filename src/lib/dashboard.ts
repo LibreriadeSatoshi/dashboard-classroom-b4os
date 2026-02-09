@@ -5,7 +5,7 @@ import { authOptions } from './auth-config'
 import type { Student, Assignment, ConsolidatedGrade, StudentFeedback } from './supabase'
 
 const supabaseUrl = process.env.SUPABASE_URL || ''
-const supabaseServiceRoleKey = process.env.SUPABASE_ANON_KEY || ''
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
 
 // Create Supabase client for server-side operations using service role key to bypass RLS
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
@@ -25,69 +25,64 @@ export interface WeeklyProgress {
 
 // Helper function to get weekly progress data for a student and class average
 export async function getWeeklyProgressData(githubUsername: string): Promise<WeeklyProgress[]> {
-  // --- START HARDCODED DATA FOR DEMONSTRATION ---
-  // This section provides sample data for the Weekly Progress Chart.
-  // In a production environment, this data would be dynamically fetched from a database.
-  const hardcodedWeeklyProgress: WeeklyProgress[] = [
-    { weekLabel: 'Week 1', studentScore: 75, classAverage: 70 },
-    { weekLabel: 'Week 2', studentScore: 80, classAverage: 72 },
-    { weekLabel: 'Week 3', studentScore: 70, classAverage: 75 },
-    { weekLabel: 'Week 4', studentScore: 85, classAverage: 78 },
-    { weekLabel: 'Week 5', studentScore: 90, classAverage: 80 },
-    { weekLabel: 'Week 6', studentScore: 88, classAverage: 82 },
-  ];
-  return Promise.resolve(hardcodedWeeklyProgress);
-  // --- END HARDCODED DATA FOR DEMONSTRATION ---
-
-  /*
-  // Original logic for fetching data from Supabase (commented out for demonstration)
-  const sixWeeksAgo = new Date()
-  sixWeeksAgo.setDate(sixWeeksAgo.getDate() - (6 * 7)) // Go back 6 weeks
+  // Fetch grades from the last 1 year
+  const oneYearAgo = new Date()
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
 
   const { data: grades, error } = await supabase
     .from('consolidated_grades')
     .select('github_username, points_awarded, points_available, grade_updated_at')
-    .gte('grade_updated_at', sixWeeksAgo.toISOString())
+    .not('grade_updated_at', 'is', null)
+    .gte('grade_updated_at', oneYearAgo.toISOString())
     .order('grade_updated_at', { ascending: true })
 
   if (error) {
     console.error('Error fetching weekly grades:', error)
-    throw error
+    // Return empty array on error
+    return []
   }
 
   const weeklyDataMap = new Map<string, {
+    weekYear: string;  // For sorting: "2026-W5"
     studentAwarded: number, studentAvailable: number,
     classAwarded: number, classAvailable: number,
-    studentCount: Set<string> // To count unique students per week for average
+    studentCount: Set<string>
   }>()
 
   // Initialize map for the last 6 weeks
   for (let i = 0; i < 6; i++) {
     const weekStart = new Date()
     weekStart.setDate(weekStart.getDate() - ((5 - i) * 7))
-    const weekLabel = `Week ${getWeekNumber(weekStart)}` // Or format as "Mon Oct 2"
-    weeklyDataMap.set(weekLabel, {
+    const weekNum = getWeekNumber(weekStart)
+    const year = weekStart.getFullYear()
+    const weekYear = `${year}-${weekNum}`
+    const weekLabel = `Week ${weekNum}`
+    weeklyDataMap.set(weekYear, {
+      weekYear,
       studentAwarded: 0, studentAvailable: 0,
       classAwarded: 0, classAvailable: 0,
       studentCount: new Set<string>()
     })
   }
 
+  // Aggregate grades by week
   grades.forEach(grade => {
     const gradeDate = new Date(grade.grade_updated_at)
-    const weekLabel = `Week ${getWeekNumber(gradeDate)}` // Or format as "Mon Oct 2"
+    const weekNum = getWeekNumber(gradeDate)
+    const year = gradeDate.getFullYear()
+    const weekYear = `${year}-${weekNum}`
+    const weekLabel = `Week ${weekNum}`
 
-    if (!weeklyDataMap.has(weekLabel)) {
-      // This might happen if grades are older than 6 weeks but still fetched due to gte filter
-      // Or if a week has no grades, we still want it in the map
-      weeklyDataMap.set(weekLabel, {
+    if (!weeklyDataMap.has(weekYear)) {
+      weeklyDataMap.set(weekYear, {
+        weekYear,
         studentAwarded: 0, studentAvailable: 0,
         classAwarded: 0, classAvailable: 0,
         studentCount: new Set<string>()
       })
     }
 
-    const weekStats = weeklyDataMap.get(weekLabel)!
+    const weekStats = weeklyDataMap.get(weekYear)!
 
     // Aggregate for the specific student
     if (grade.github_username === githubUsername) {
@@ -102,31 +97,26 @@ export async function getWeeklyProgressData(githubUsername: string): Promise<Wee
   })
 
   const result: WeeklyProgress[] = Array.from(weeklyDataMap.entries())
-    .sort(([labelA], [labelB]) => {
-      // Simple sorting by week number, assuming "Week XX" format
-      const weekNumA = parseInt(labelA.split(' ')[1])
-      const weekNumB = parseInt(labelB.split(' ')[1])
-      return weekNumA - weekNumB
-    })
-    .map(([weekLabel, stats]) => {
+    .sort(([weekYearA], [weekYearB]) => weekYearA.localeCompare(weekYearB))
+    .map(([weekYear, stats]) => {
+      const weekNum = parseInt(weekYear.split('-')[1])
+      const weekLabel = `Week ${weekNum}`
       const studentScore = stats.studentAvailable > 0
         ? (stats.studentAwarded / stats.studentAvailable) * 100
         : 0
 
-      // Calculate class average based on total points, not average of averages
       const classAverage = stats.classAvailable > 0
         ? (stats.classAwarded / stats.classAvailable) * 100
         : 0
 
       return {
         weekLabel,
-        studentScore: parseFloat(studentScore.toFixed(2)),
-        classAverage: parseFloat(classAverage.toFixed(2))
+        studentScore: Number.parseFloat(studentScore.toFixed(2)),
+        classAverage: Number.parseFloat(classAverage.toFixed(2))
       }
     })
 
   return result
-  */
 }
 
 // Helper function to get week number (ISO week date)
