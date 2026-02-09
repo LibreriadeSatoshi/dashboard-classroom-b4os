@@ -25,7 +25,8 @@ export default async function Dashboard() {
       students: [],
       assignments: [],
       grades: [],
-      feedback: []
+      feedback: [],
+      hasUnreadFeedback: false
     }
   }
 

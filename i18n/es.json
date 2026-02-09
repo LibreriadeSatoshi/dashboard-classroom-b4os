@@ -74,5 +74,12 @@
     "made": "Hecho con",
     "made-continue": "para la comunidad Bitcoin",
     "contact": "Contacto B4OS"
+  },
+  "feedback": {
+    "title": "Tus Comentarios",
+    "loading": "Cargando comentarios...",
+    "error_loading": "Error al cargar los comentarios.",
+    "error_marking_as_read": "Error al marcar como leído.",
+    "no_feedback": "No hay comentarios para mostrar."
   }
 }
