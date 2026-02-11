@@ -3,11 +3,13 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { type Student, type Assignment, type ConsolidatedGrade, type StudentFeedback } from '@/lib/supabase'
-import { Feedback } from '@/lib/feedback'
+import { type Feedback } from '@/lib/feedback'
+import { type AssignmentProgress } from '@/lib/dashboard'
 import { Users, Crown, Sword, Shield } from 'phosphor-react'
 import StatsCard from '@/components/StatsCard'
 import StudentsTable from '@/components/StudentsTable'
 import Header from '@/components/Header'
+import AssignmentProgressChart from '@/components/AssignmentProgressChart'
 import { useNamePreference } from '@/contexts/NamePreferenceContext'
 import { useTranslations } from 'next-intl'
 import { filterValidGrades, calculateGradePercentage } from '@/utils/gradeFilters'
@@ -19,12 +21,14 @@ interface DashboardClientProps {
     grades: ConsolidatedGrade[]
     feedback: StudentFeedback[]
     hasUnreadFeedback: boolean
-  }
+  },
+  assignmentProgressData: AssignmentProgress[]
 }
 
-export default function DashboardClient({ initialData }: DashboardClientProps) {
+export default function DashboardClient({ initialData, assignmentProgressData }: Readonly<DashboardClientProps>) {
   const { students, assignments, grades, feedback } = initialData
   const { showRealName } = useNamePreference()
+
   const t = useTranslations('dashboard')
   const tc = useTranslations('common')
 
@@ -284,6 +288,10 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           />
         </div>
 
+        {/* Assignment Progress Chart */}
+        <div className="mb-8">
+          <AssignmentProgressChart data={assignmentProgressData} />
+        </div>
 
         {/* Students Table */}
         <StudentsTable

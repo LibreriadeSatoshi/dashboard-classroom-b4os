@@ -19,6 +19,210 @@ export interface DashboardData {
   hasUnreadFeedback: boolean
 }
 
+export interface WeeklyProgress {
+  weekLabel: string; // e.g., "Week 40" or "Oct 2"
+  studentScore: number; // Percentage
+  classAverage: number; // Percentage
+}
+
+export interface AssignmentProgress {
+  assignmentName: string;
+  originalName?: string;
+  studentPoints: number;
+  classAveragePoints: number;
+}
+
+// Helper function to get weekly progress data for a student and class average
+export async function getWeeklyProgressData(githubUsername: string): Promise<WeeklyProgress[]> {
+  // Fetch grades from the last 1 year
+  const oneYearAgo = new Date()
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
+
+  const { data: grades, error } = await supabase
+    .from('consolidated_grades')
+    .select('github_username, points_awarded, points_available, grade_updated_at')
+    .not('grade_updated_at', 'is', null)
+    .gte('grade_updated_at', oneYearAgo.toISOString())
+    .order('grade_updated_at', { ascending: true })
+
+  if (error) {
+    console.error('Error fetching weekly grades:', error)
+    // Return empty array on error
+    return []
+  }
+
+  const weeklyDataMap = new Map<string, {
+    weekYear: string;  // For sorting: "2026-W5"
+    studentAwarded: number, studentAvailable: number,
+    classAwarded: number, classAvailable: number,
+    studentCount: Set<string>
+  }>()
+
+  // Initialize map for the last 6 weeks
+  for (let i = 0; i < 6; i++) {
+    const weekStart = new Date()
+    weekStart.setDate(weekStart.getDate() - ((5 - i) * 7))
+    const weekNum = getWeekNumber(weekStart)
+    const year = weekStart.getFullYear()
+    const weekYear = `${year}-${weekNum}`
+    weeklyDataMap.set(weekYear, {
+      weekYear,
+      studentAwarded: 0, studentAvailable: 0,
+      classAwarded: 0, classAvailable: 0,
+      studentCount: new Set<string>()
+    })
+  }
+
+  // Aggregate grades by week
+  grades.forEach(grade => {
+    const gradeDate = new Date(grade.grade_updated_at)
+    const weekNum = getWeekNumber(gradeDate)
+    const year = gradeDate.getFullYear()
+    const weekYear = `${year}-${weekNum}`
+
+    if (!weeklyDataMap.has(weekYear)) {
+      weeklyDataMap.set(weekYear, {
+        weekYear,
+        studentAwarded: 0, studentAvailable: 0,
+        classAwarded: 0, classAvailable: 0,
+        studentCount: new Set<string>()
+      })
+    }
+
+    const weekStats = weeklyDataMap.get(weekYear)!
+
+    // Aggregate for the specific student
+    if (grade.github_username === githubUsername) {
+      weekStats.studentAwarded += grade.points_awarded || 0
+      weekStats.studentAvailable += grade.points_available || 0
+    }
+
+    // Aggregate for the class
+    weekStats.classAwarded += grade.points_awarded || 0
+    weekStats.classAvailable += grade.points_available || 0
+    weekStats.studentCount.add(grade.github_username)
+  })
+
+  const result: WeeklyProgress[] = Array.from(weeklyDataMap.entries())
+    .sort(([weekYearA], [weekYearB]) => weekYearA.localeCompare(weekYearB))
+    .map(([weekYear, stats]) => {
+      const weekNum = Number.parseInt(weekYear.split('-')[1])
+      const weekLabel = `Week ${weekNum}`
+      const studentScore = stats.studentAvailable > 0
+        ? (stats.studentAwarded / stats.studentAvailable) * 100
+        : 0
+
+      const classAverage = stats.classAvailable > 0
+        ? (stats.classAwarded / stats.classAvailable) * 100
+        : 0
+
+      return {
+        weekLabel,
+        studentScore: Number.parseFloat(studentScore.toFixed(2)),
+        classAverage: Number.parseFloat(classAverage.toFixed(2))
+      }
+    })
+
+  return result
+}
+
+// Helper function to get assignment progress data for a student and class average
+export async function getAssignmentProgressData(githubUsername: string): Promise<AssignmentProgress[]> {
+  const { data: grades, error } = await supabase
+    .from('zzz_grades')
+    .select('github_username, assignment_name, points_awarded, fork_created_at')
+    .not('points_awarded', 'is', null)
+    .order('fork_created_at', { ascending: true })
+
+  if (error || !grades) {
+    console.error('Error fetching assignment grades:', error)
+    return []
+  }
+
+  const assignmentMap = new Map<string, {
+    studentAwarded: number,
+    classTotalPoints: number,
+    studentCount: number,
+    forkCreatedAt: string
+  }>()
+
+  grades.forEach(grade => {
+    const assignmentName = grade.assignment_name;
+    // Forzamos que sea número para evitar concatenación de strings
+    const points = Number(grade.points_awarded) || 0; 
+
+    if (!assignmentMap.has(assignmentName)) {
+      assignmentMap.set(assignmentName, {
+        studentAwarded: 0,
+        classTotalPoints: 0,
+        studentCount: 0,
+        forkCreatedAt: grade.fork_created_at || ''
+      })
+    }
+
+    const stats = assignmentMap.get(assignmentName)!
+    
+    if (grade.github_username === githubUsername) {
+      stats.studentAwarded = points; // Asumimos que un alumno solo tiene una entrada por tarea
+    }
+
+    stats.classTotalPoints += points;
+    stats.studentCount += 1;
+  })
+
+  const result: AssignmentProgress[] = Array.from(assignmentMap.entries())
+    .map(([assignmentName, stats]) => {
+      const classAverage = stats.studentCount > 0 ? stats.classTotalPoints / stats.studentCount : 0;
+      
+      return {
+        assignmentName: formatAssignmentName(assignmentName),
+        originalName: assignmentName,
+        // Aquí asumimos que quieres el porcentaje. 
+        // Si points_awarded ya es sobre 100, no necesitas dividir por maxPoints.
+        studentPoints: Math.round(stats.studentAwarded), 
+        classAveragePoints: Math.round(classAverage)
+      }
+    })
+    .sort((a, b) => {
+      // Get stats for each assignment to compare dates
+      const statsA = assignmentMap.get(a.originalName)!;
+      const statsB = assignmentMap.get(b.originalName)!;
+      const dateA = statsA?.forkCreatedAt || '';
+      const dateB = statsB?.forkCreatedAt || '';
+      return dateA.localeCompare(dateB);
+    });
+
+  return result
+}
+
+// Helper function to format assignment names with line breaks for better readability
+function formatAssignmentName(name: string): string {
+  const nameMap: Record<string, string> = {
+    'bitcoin-core-setup-and-tests': 'Bitcoin Core Setup\n       and Tests',
+    'curse-of-missing-descriptors': 'Curse of Missing\n      Descriptors',
+    'the-moria-mining-codex-part-1': 'The Moria Mining\n   Codex Part-1',
+    'the-moria-mining-codex-part-2': 'The Moria Mining\n   Codex Part-2',
+    'tweaks-generator-for-silent-payments': ' Tweaks Generator for\n      Silent Payments',
+    'vintage-wallet-modernization-challenge': 'Vintage Wallet Modernization\n       Challenge'
+  }
+  
+  return nameMap[name] || name
+}
+
+// Helper function to get week number (ISO week date)
+function getWeekNumber(d: Date): number {
+  // Copy date so don't modify original
+  d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  // Set to nearest Thursday: current date + 4 - current day number
+  // Make Sunday's day number 7
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  // Get first day of year
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  // Calculate full weeks to nearest Thursday
+  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return weekNo;
+}
+
 // Helper function to get full leaderboard (admin/instructor only)
 async function getFullLeaderboard(): Promise<DashboardData> {
   const [studentsResult, assignmentsResult, gradesResult, feedbackResult] = await Promise.all([

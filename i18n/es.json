@@ -7,7 +7,16 @@
     "settings": "Configuración",
     "language": "Idioma",
     "admin": "admin",
-    "dev": "dev"
+    "dev": "dev",
+    "yourScore": "Tu Puntuación",
+    "classAverage": "Promedio de la Clase",
+    "weeklyProgressChartTitle": "Progreso Semanal vs. Promedio de la Clase",
+    "noWeeklyProgressData": "No hay datos de progreso semanal disponibles.",
+    "assignmentProgressChartTitle": "Tu Evolucion como Habitante de la Tierra Media",
+    "noAssignmentProgressData": "No hay datos de assignments disponibles.",
+    "yourPercentage": "Tu",
+    "classAveragePercentage": "Promedio Clase",
+    "yourTrend": "Tu Tendencia"
   },
   "dashboard": {
     "title": "Consejo de la Tierra Media",
