@@ -35,10 +35,10 @@ export interface DashboardData {
 // Helper function to get full leaderboard (admin/instructor only)
 async function getFullLeaderboard(): Promise<DashboardData> {
   const [studentsResult, assignmentsResult, gradesResult, feedbackResult] = await Promise.all([
-    supabase.from('zzz_students').select('*').order('github_username'),
-    supabase.from('zzz_assignments').select('*').order('name'),
-    supabase.from('consolidated_grades').select('*').order('github_username'),
-    supabase.from('zzz_student_reviewers')
+    supabase.from(TABLE_NAMES.STUDENTS).select('*').order('github_username'),
+    supabase.from(TABLE_NAMES.ASSIGNMENTS).select('*').order('name'),
+    supabase.from(TABLE_NAMES.CONSOLIDATED_GRADES).select('*').order('github_username'),
+    supabase.from(TABLE_NAMES.STUDENT_REVIEWERS)
       .select('id, student_username, reviewer_username, assignment_name, feedback_for_student, status, completed_at')
       .not('feedback_for_student', 'is', null)
   ])
@@ -59,6 +59,21 @@ async function getFullLeaderboard(): Promise<DashboardData> {
     console.error('Error fetching feedback:', feedbackResult.error)
     // Don't throw - feedback is optional
   }
+
+  // Check if there's any unread feedback in the system (admin sees all)
+  const { count: unreadReviewersCount } = await supabase
+    .from(TABLE_NAMES.STUDENT_REVIEWERS)
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'completed')
+    .eq('read_by_student', false)
+    .not('feedback_for_student', 'is', null);
+
+  const { count: unreadCommentsCount } = await supabase
+    .from(TABLE_NAMES.REVIEW_COMMENTS)
+    .select('*', { count: 'exact', head: true })
+    .eq('read_by_student', false);
+
+  const hasUnreadFeedback = ((unreadReviewersCount || 0) + (unreadCommentsCount || 0)) > 0;
 
   return {
     students: studentsResult.data || [],
@@ -86,11 +101,11 @@ async function getAnonymizedLeaderboard(currentUsername?: string): Promise<Dashb
   // Fetch all data in parallel (students see full leaderboard)
   const [studentsResult, assignmentsResult, gradesResult, privacyResult] = await Promise.all([
     // Get ALL students for leaderboard
-    supabase.from('zzz_students').select('*').order('github_username'),
+    supabase.from(TABLE_NAMES.STUDENTS).select('*').order('github_username'),
     // Get ALL assignments
-    supabase.from('zzz_assignments').select('*').order('name'),
+    supabase.from(TABLE_NAMES.ASSIGNMENTS).select('*').order('name'),
     // Get ALL grades for leaderboard
-    supabase.from('consolidated_grades').select('*').order('github_username'),
+    supabase.from(TABLE_NAMES.CONSOLIDATED_GRADES).select('*').order('github_username'),
     // Get privacy preferences to filter feedback visibility
     supabase.from('zzz_user_privacy').select('github_username, show_real_name'),
   ])
@@ -122,7 +137,7 @@ async function getAnonymizedLeaderboard(currentUsername?: string): Promise<Dashb
 
   // Fetch feedback: own feedback + feedback from users who revealed their identity
   const feedbackResult = await supabase
-    .from('zzz_student_reviewers')
+    .from(TABLE_NAMES.STUDENT_REVIEWERS)
     .select('id, student_username, reviewer_username, assignment_name, feedback_for_student, status, completed_at')
     .not('feedback_for_student', 'is', null)
 
@@ -133,6 +148,23 @@ async function getAnonymizedLeaderboard(currentUsername?: string): Promise<Dashb
       fb.student_username === currentUsername || revealedUsernames.has(fb.student_username)
     )
   }
+
+  // Check if current user has unread feedback
+  const { count: unreadReviewersCount } = await supabase
+    .from(TABLE_NAMES.STUDENT_REVIEWERS)
+    .select('*', { count: 'exact', head: true })
+    .eq('student_username', currentUsername)
+    .eq('status', 'completed')
+    .eq('read_by_student', false)
+    .not('feedback_for_student', 'is', null);
+
+  const { count: unreadCommentsCount } = await supabase
+    .from(TABLE_NAMES.REVIEW_COMMENTS)
+    .select('*', { count: 'exact', head: true })
+    .eq('student_username', currentUsername)
+    .eq('read_by_student', false);
+
+  const hasUnreadFeedback = ((unreadReviewersCount || 0) + (unreadCommentsCount || 0)) > 0;
 
   return {
     students: studentsResult.data || [],

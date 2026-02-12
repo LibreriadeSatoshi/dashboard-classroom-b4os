@@ -7,7 +7,16 @@
     "settings": "Settings",
     "language": "Language",
     "admin": "admin",
-    "dev": "dev"
+    "dev": "dev",
+    "yourScore": "Your Score",
+    "classAverage": "Class Average",
+    "weeklyProgressChartTitle": "Weekly Progress vs. Class Average",
+    "noWeeklyProgressData": "No weekly progress data available.",
+    "assignmentProgressChartTitle": "Your Evolution as a Middle-earth Inhabitant",
+    "noAssignmentProgressData": "No assignment data available.",
+    "yourPercentage": "You",
+    "classAveragePercentage": "Class Avg",
+    "yourTrend": "Your Trend"
   },
   "dashboard": {
     "title": "Middle-earth Council",
@@ -74,5 +83,12 @@
     "made": "Made with",
     "made-continue": "for the Bitcoin community",
     "contact": "Contact B4OS"
+  },
+  "feedback": {
+    "title": "Your Feedback",
+    "loading": "Loading feedback...",
+    "error_loading": "Failed to load feedback.",
+    "error_marking_as_read": "Failed to mark feedback as read.",
+    "no_feedback": "No feedback to display."
   }
 }

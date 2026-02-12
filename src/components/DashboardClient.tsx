@@ -1,11 +1,15 @@
 'use client'
 
+import { useState } from 'react'
 import Image from 'next/image'
 import { type Student, type Assignment, type ConsolidatedGrade, type StudentFeedback } from '@/lib/supabase'
+import { type Feedback } from '@/lib/feedback'
+import { type AssignmentProgress } from '@/lib/dashboard'
 import { Users, Crown, Sword, Shield } from 'phosphor-react'
 import StatsCard from '@/components/StatsCard'
 import StudentsTable from '@/components/StudentsTable'
 import Header from '@/components/Header'
+import AssignmentProgressChart from '@/components/AssignmentProgressChart'
 import { useNamePreference } from '@/contexts/NamePreferenceContext'
 import { useTranslations } from 'next-intl'
 import { filterValidGrades, calculateGradePercentage } from '@/utils/gradeFilters'
@@ -27,6 +31,7 @@ interface DashboardClientProps {
 export default function DashboardClient({ initialData }: DashboardClientProps) {
   const { students, assignments, grades, feedback, badges, userBadges } = initialData
   const { showRealName } = useNamePreference()
+
   const t = useTranslations('dashboard')
   const tc = useTranslations('common')
   const { data: session } = useSession()
@@ -56,6 +61,41 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
       }
     }
   }, [session, grades, badges, userBadges])
+
+  // Transform StudentFeedback to Feedback format (only completed feedback)
+  // Note: Some records may have id:null - logs added to track this issue
+  const feedbackList: Feedback[] = feedback
+    .filter((fb): fb is StudentFeedback & { status: 'completed' } => fb.status === 'completed' && !!fb.feedback_for_student)
+    .map(fb => ({
+      id: `reviewer-${fb.id}`,
+      studentId: fb.student_username,
+      content: fb.feedback_for_student!,
+      read: false,
+      createdAt: fb.completed_at || new Date().toISOString()
+    }))
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+  // State for feedback dropdown
+  const [isFeedbackDropdownOpen, setFeedbackDropdownOpen] = useState(false)
+  const [hasUnreadFeedback, setHasUnreadFeedback] = useState(initialData.hasUnreadFeedback)
+
+  // Handlers for feedback dropdown
+  const handleToggleFeedbackDropdown = () => {
+    setFeedbackDropdownOpen(prev => {
+      if (!prev) { // If opening the dropdown
+        setHasUnreadFeedback(false); // Mark all as read visually
+      }
+      return !prev;
+    });
+  }
+
+  const handleFeedbackRead = () => {
+    // This function is a callback for the panel.
+    // We can re-fetch the dashboard data or simply turn off the bell.
+    // For now, let's assume reading any feedback might clear the "new" status.
+    // A more robust solution might check if *any* unread feedback remains.
+    setHasUnreadFeedback(false) // Simplistic approach: hide indicator after interaction
+  }
 
   // Filter valid grades using centralized business logic
   const validGrades = filterValidGrades(grades)
@@ -281,6 +321,10 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
               />
             </div>
 
+        {/* Assignment Progress Chart */}
+        <div className="mb-8">
+          <AssignmentProgressChart data={assignmentProgressData} />
+        </div>
 
             {/* Students Table */}
             <StudentsTable

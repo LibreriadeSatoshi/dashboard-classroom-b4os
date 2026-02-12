@@ -8,8 +8,20 @@ import { CaretDown, SignOut, Crown, Eye, EyeSlash, Sword } from 'phosphor-react'
 import { useNamePreference } from '@/contexts/NamePreferenceContext'
 import { useTranslations, useLocale } from 'next-intl'
 import LanguageSwitcher from './LanguageSwitcher'
+import FeedbackBell from './FeedbackBell'
+import FeedbackDropdown from './FeedbackDropdown'
+import { Feedback } from '@/lib/feedback'
 
-export default function Header() {
+interface HeaderProps {
+  readonly hasUnreadFeedback: boolean;
+  readonly isFeedbackOpen: boolean;
+  readonly onFeedbackClick: () => void;
+  readonly onFeedbackRead: () => void;
+  readonly onCloseFeedback: () => void;
+  readonly initialFeedback?: Feedback[];
+}
+
+export default function Header({ hasUnreadFeedback, isFeedbackOpen, onFeedbackClick, onFeedbackRead, onCloseFeedback, initialFeedback }: Readonly<HeaderProps>) {
   const { data: session } = useSession()
   const [showDropdown, setShowDropdown] = useState(false)
   const { showRealName, setShowRealName, loading } = useNamePreference()
@@ -40,6 +52,17 @@ export default function Header() {
     <header className="absolute top-0 left-0 right-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-end gap-4 h-16">
+          {/* Feedback Bell & Dropdown */}
+          <div className="relative">
+            <FeedbackBell hasUnreadFeedback={hasUnreadFeedback} onClick={onFeedbackClick} />
+            <FeedbackDropdown 
+              isOpen={isFeedbackOpen}
+              onClose={onCloseFeedback}
+              onFeedbackRead={onFeedbackRead}
+              initialFeedback={initialFeedback || []}
+            />
+          </div>
+
           {/* Language Switcher */}
           <LanguageSwitcher />
 

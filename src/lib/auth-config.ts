@@ -1,5 +1,6 @@
 import GitHubProvider from 'next-auth/providers/github'
 import { createClient } from '@supabase/supabase-js'
+import { TABLE_NAMES } from './constants'
 
 // Create server-side Supabase client (uses service role key for auth callbacks)
 // Note: This is safe because auth callbacks run only on the server, never exposed to client
@@ -37,7 +38,7 @@ export const authOptions = {
       try {
         // Check if user is in authorized_users table
         const { data: authorizedUser } = await supabase
-          .from('zzz_authorized_users')
+          .from(TABLE_NAMES.AUTHORIZED_USERS)
           .select('*')
           .eq('github_username', githubUsername)
           .single()
@@ -48,7 +49,7 @@ export const authOptions = {
 
         // Check if user is in consolidated_grades (students)
         const { data: studentUser } = await supabase
-          .from('consolidated_grades')
+          .from(TABLE_NAMES.CONSOLIDATED_GRADES)
           .select('github_username')
           .eq('github_username', githubUsername)
           .limit(1)
@@ -83,7 +84,7 @@ export const authOptions = {
         try {
           // Check if user is in authorized_users table first
           const { data: authorizedUser } = await supabase
-            .from('zzz_authorized_users')
+            .from(TABLE_NAMES.AUTHORIZED_USERS)
             .select('role, status')
             .eq('github_username', githubUsername)
             .single()
@@ -94,7 +95,7 @@ export const authOptions = {
           } else {
             // Check if user is a student
             const { data: studentUser } = await supabase
-              .from('consolidated_grades')
+              .from(TABLE_NAMES.CONSOLIDATED_GRADES)
               .select('github_username')
               .eq('github_username', githubUsername)
               .limit(1)
