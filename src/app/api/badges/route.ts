@@ -41,11 +41,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Default: get badges with progress
+    const points = Number(await getUserPoints(username)) || 0
     const badges = await getUserBadges(username)
     const nextBadgeProgress = await getNextBadgeProgress(username)
 
     return NextResponse.json({ 
       badges,
+      points,
       definitions: BADGE_DEFINITIONS,
       nextBadgeProgress
     })
@@ -58,26 +60,5 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/badges - Badge actions
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.githubUsername) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // For now, badges are auto-calculated from points
-    // This endpoint is reserved for future badge acknowledgment tracking
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Badges are calculated automatically from points' 
-    })
-  } catch (error) {
-    console.error('Error in POST /api/badges:', error)
-    return NextResponse.json(
-      { error: 'Failed to process badge action' },
-      { status: 500 }
-    )
-  }
-}
+// Badge actions - reserved for future use (e.g., manual acknowledgment)
+// Currently badges are auto-calculated from points

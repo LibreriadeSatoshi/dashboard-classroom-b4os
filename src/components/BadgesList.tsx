@@ -4,8 +4,8 @@ import { useTranslations } from 'next-intl'
 import { BADGE_DEFINITIONS, BadgeInfo } from '@/lib/badges'
 
 interface BadgesListProps {
-  badges: BadgeInfo[]
-  currentPoints: number
+  readonly badges: BadgeInfo[];
+  readonly currentPoints: number;
 }
 
 export default function BadgesList({ badges, currentPoints }: BadgesListProps) {

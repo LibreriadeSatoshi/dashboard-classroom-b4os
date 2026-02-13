@@ -24,7 +24,10 @@
     "badgeEarned": "Badge Earned!",
     "pointsToNext": "{points} more points to next badge",
     "allEarned": "All badges earned!",
-    "level": "Level"
+    "level": "Level",
+    "badge": "Badge",
+    "pointsToUnlock": "{points} pts to unlock",
+    "keepStudying": "Keep studying to earn recognition in Middle-earth"
   },
   "dashboard": {
     "title": "Middle-earth Council",
@@ -76,7 +79,8 @@
     "records": "records",
     "points": "pts",
     "feedback": "Feedback",
-    "tutorFeedback": "Tutor Feedback"
+    "tutorFeedback": "Tutor Feedback",
+    "badge": "Badge"
   },
   "auth": {
     "signIn": "Sign In",

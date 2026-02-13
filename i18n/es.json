@@ -24,7 +24,10 @@
     "badgeEarned": "¡Insignia Obtenida!",
     "pointsToNext": "{points} puntos más para la siguiente insignia",
     "allEarned": "¡Todas las insignias obtenidas!",
-    "level": "Nivel"
+    "level": "Nivel",
+    "badge": "Insignia",
+    "pointsToUnlock": "{points} pts para desbloquear",
+    "keepStudying": "Sigue estudiando para ganar reconocimiento en la Tierra Media"
   },
   "dashboard": {
     "title": "Consejo de la Tierra Media",
@@ -76,7 +79,8 @@
     "records": "registros",
     "points": "pts",
     "feedback": "Feedback",
-    "tutorFeedback": "Feedback del Tutor"
+    "tutorFeedback": "Feedback del Tutor",
+    "badge": "Insignia"
   },
   "auth": {
     "signIn": "Iniciar Sesión",

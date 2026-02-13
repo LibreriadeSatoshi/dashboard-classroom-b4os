@@ -11,6 +11,8 @@ import LanguageSwitcher from './LanguageSwitcher'
 import FeedbackBell from './FeedbackBell'
 import FeedbackDropdown from './FeedbackDropdown'
 import { Feedback } from '@/lib/feedback'
+import UserBadgesDropdown from './UserBadgesDropdown'
+import { useUserBadges } from '@/hooks/useUserBadges'
 
 interface HeaderProps {
   readonly hasUnreadFeedback: boolean;
@@ -29,7 +31,13 @@ export default function Header({ hasUnreadFeedback, isFeedbackOpen, onFeedbackCl
   const tc = useTranslations('common')
   const locale = useLocale()
 
+  // Get user badges - call hook before early return
+  const githubUsername = session ? (session.user as any)?.githubUsername : null
+  const { badges, currentPoints, loading: badgesLoading, newlyEarnedBadge, clearNewlyEarnedBadge } = useUserBadges(githubUsername)
+
   if (!session) return null
+
+  const userRole = (session.user as any)?.role || 'dev'
 
   const handleSignOut = () => {
     signOut({ callbackUrl: `/${locale}/auth/signin` })
@@ -54,7 +62,12 @@ export default function Header({ hasUnreadFeedback, isFeedbackOpen, onFeedbackCl
         <div className="flex items-center justify-end gap-4 h-16">
           {/* Feedback Bell & Dropdown */}
           <div className="relative">
-            <FeedbackBell hasUnreadFeedback={hasUnreadFeedback} onClick={onFeedbackClick} />
+            <FeedbackBell 
+              hasUnreadFeedback={hasUnreadFeedback} 
+              onClick={onFeedbackClick}
+              newlyEarnedBadge={newlyEarnedBadge}
+              onBadgeNotificationSeen={clearNewlyEarnedBadge}
+            />
             <FeedbackDropdown 
               isOpen={isFeedbackOpen}
               onClose={onCloseFeedback}
@@ -73,13 +86,13 @@ export default function Header({ hasUnreadFeedback, isFeedbackOpen, onFeedbackCl
               className="flex items-center gap-2 text-white bg-slate-800/80 backdrop-blur-sm hover:bg-slate-700/80 rounded-lg px-3 py-2 transition-all duration-200 border border-slate-600/40 shadow-lg"
             >
               {/* Role Icon */}
-              {getRoleIcon((session.user as any)?.role || 'dev')}
+              {getRoleIcon(userRole)}
               
               {/* Avatar */}
               <div className="relative">
                 <Image
                   src={session.user?.image || '/default-avatar.png'}
-                  alt={(session.user as any)?.githubUsername || 'User'}
+                  alt={githubUsername || 'User'}
                   width={32}
                   height={32}
                   className="rounded-full ring-2 ring-slate-600"
@@ -88,7 +101,7 @@ export default function Header({ hasUnreadFeedback, isFeedbackOpen, onFeedbackCl
 
               {/* Username */}
               <span className="text-sm font-medium hidden sm:block">
-                {(session.user as any)?.githubUsername}
+                {githubUsername}
               </span>
 
               {/* Dropdown arrow */}
@@ -108,36 +121,46 @@ export default function Header({ hasUnreadFeedback, isFeedbackOpen, onFeedbackCl
                 />
 
                 {/* Menu */}
-                <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-20">
-                  <div className="p-4">
+                <div className="absolute right-0 top-full mt-2 w-80 max-w-[90vw] bg-white rounded-lg shadow-xl border border-gray-200 z-20 overflow-hidden">
+                  <div className="p-3 sm:p-4">
                     {/* User Info */}
-                    <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-3">
                       <Image
                         src={session.user?.image || '/default-avatar.png'}
-                        alt={(session.user as any)?.githubUsername || 'User'}
-                        width={40}
-                        height={40}
-                        className="rounded-full"
+                        alt={githubUsername || 'User'}
+                        width={36}
+                        height={36}
+                        className="rounded-full flex-shrink-0"
                       />
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-900">
-                          {(session.user as any)?.githubUsername}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-gray-900 truncate">
+                          {githubUsername}
                         </div>
-                        <div className="text-sm text-gray-600">
-                          {session.user?.email || `${(session.user as any)?.githubUsername}@github`}
+                        <div className="text-xs sm:text-sm text-gray-600 truncate" title={session.user?.email || `${githubUsername}@github`}>
+                          {session.user?.email || `${githubUsername}@github`}
                         </div>
                       </div>
                     </div>
 
                     {/* Role Badge */}
-                    <div className="mb-4">
-                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border ${getRoleBadgeColor((session.user as any)?.role || 'dev')}`}>
-                        {(session.user as any)?.role === 'administrator' ? tc('admin') : tc('dev')}
+                    <div className="mb-3">
+                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border ${getRoleBadgeColor(userRole)}`}>
+                        {userRole === 'administrator' ? tc('admin') : tc('dev')}
                       </div>
                     </div>
 
+                    {/* User Badges Dropdown - Show for all users with points */}
+                    {(!badgesLoading && badges.length > 0) && (
+                      <div className="mb-3 -mx-1">
+                        <UserBadgesDropdown 
+                          badges={badges} 
+                          currentPoints={currentPoints} 
+                        />
+                      </div>
+                    )}
+
                     {/* Name Preference Toggle - Only for students */}
-                    {(session.user as any)?.role === 'dev' && (
+                    {userRole === 'dev' && (
                       <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">

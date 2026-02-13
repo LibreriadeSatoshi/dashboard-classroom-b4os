@@ -119,6 +119,7 @@ export const authOptions = {
       if (token.githubUsername) {
         session.user.githubUsername = token.githubUsername as string
         session.user.role = token.role as 'administrator' | 'dev'
+        session.user.image = token.image as string
         // accessToken is intentionally NOT included here - stays server-side only
       }
       return session

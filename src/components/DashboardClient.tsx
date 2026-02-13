@@ -5,8 +5,6 @@ import Image from 'next/image'
 import { type Student, type Assignment, type ConsolidatedGrade, type StudentFeedback } from '@/lib/supabase'
 import { type Feedback } from '@/lib/feedback'
 import { type AssignmentProgress } from '@/lib/dashboard'
-import { type BadgeInfo } from '@/lib/badges'
-import BadgesList from '@/components/BadgesList'
 import { Users, Crown, Sword, Shield } from 'phosphor-react'
 import StatsCard from '@/components/StatsCard'
 import StudentsTable from '@/components/StudentsTable'
@@ -25,15 +23,10 @@ interface DashboardClientProps {
     hasUnreadFeedback: boolean
   },
   assignmentProgressData: AssignmentProgress[]
-  badgeData: {
-    badges: BadgeInfo[]
-    points: number
-  }
 }
 
-export default function DashboardClient({ initialData, assignmentProgressData, badgeData }: Readonly<DashboardClientProps>) {
+export default function DashboardClient({ initialData, assignmentProgressData }: Readonly<DashboardClientProps>) {
   const { students, assignments, grades, feedback } = initialData
-  const { badges, points } = badgeData
   const { showRealName } = useNamePreference()
 
   const t = useTranslations('dashboard')
@@ -294,9 +287,6 @@ export default function DashboardClient({ initialData, assignmentProgressData, b
             descriptionKey="kingdomGlory"
           />
         </div>
-
-        {/* Badges Section */}
-        <BadgesList badges={badges} currentPoints={points} />
 
         {/* Assignment Progress Chart */}
         <div className="mb-8">

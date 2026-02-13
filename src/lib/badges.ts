@@ -31,7 +31,7 @@ export async function getUserPoints(githubUsername: string): Promise<number> {
     .select('points_awarded')
     .eq('github_username', githubUsername)
 
-  const totalPoints = grades?.reduce((sum, g) => sum + (g.points_awarded || 0), 0) || 0
+  const totalPoints = grades?.reduce((sum, g) => sum + Number(g.points_awarded || 0), 0) || 0
 
   return totalPoints
 }
