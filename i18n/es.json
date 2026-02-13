@@ -18,6 +18,14 @@
     "classAveragePercentage": "Promedio Clase",
     "yourTrend": "Tu Tendencia"
   },
+  "badges": {
+    "title": "Logros",
+    "unlockedCount": "{unlocked}/{total} insignias",
+    "badgeEarned": "¡Insignia Obtenida!",
+    "pointsToNext": "{points} puntos más para la siguiente insignia",
+    "allEarned": "¡Todas las insignias obtenidas!",
+    "level": "Nivel"
+  },
   "dashboard": {
     "title": "Consejo de la Tierra Media",
     "subtitle": "de Aventuras y Logros del Reino",
