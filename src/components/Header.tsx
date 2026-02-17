@@ -51,8 +51,8 @@ export default function Header({ hasUnreadFeedback, isFeedbackOpen, onFeedbackCl
 
   const getRoleIcon = (role: string) => {
     return role === 'administrator' ?
-      <Crown size={20} className="text-white" /> :
-      <Sword size={20} className="text-white" />
+      <Crown size={20} className="text-amber-400" /> :
+      <Sword size={20} className="text-emerald-400" />
   }
 
 
@@ -83,16 +83,16 @@ export default function Header({ hasUnreadFeedback, isFeedbackOpen, onFeedbackCl
           <div className="relative">
             <button
               onClick={() => setShowDropdown(!showDropdown)}
-              className="flex items-center gap-2 text-white bg-slate-800/80 backdrop-blur-sm hover:bg-slate-700/80 rounded-lg px-3 py-2 transition-all duration-200 border border-slate-600/40 shadow-lg"
+              className="flex items-center gap-2 text-white bg-slate-800/80 backdrop-blur-sm hover:bg-slate-700/80 rounded-lg px-3 py-2 transition-all duration-200 border border-slate-600/40 shadow-lg max-w-[200px] sm:max-w-[240px]"
             >
               {/* Role Icon */}
-              {getRoleIcon(userRole)}
+              {getRoleIcon((session.user as any)?.role || 'dev')}
               
               {/* Avatar */}
-              <div className="relative">
+              <div className="relative flex-shrink-0">
                 <Image
                   src={session.user?.image || '/default-avatar.png'}
-                  alt={githubUsername || 'User'}
+                  alt={(session.user as any)?.githubUsername || 'User'}
                   width={32}
                   height={32}
                   className="rounded-full ring-2 ring-slate-600"
@@ -100,14 +100,14 @@ export default function Header({ hasUnreadFeedback, isFeedbackOpen, onFeedbackCl
               </div>
 
               {/* Username */}
-              <span className="text-sm font-medium hidden sm:block">
-                {githubUsername}
+              <span className="text-sm font-medium hidden sm:block truncate min-w-0">
+                {(session.user as any)?.githubUsername}
               </span>
 
               {/* Dropdown arrow */}
               <CaretDown
                 size={16}
-                className={`transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`}
+                className={`transition-transform duration-200 flex-shrink-0 ${showDropdown ? 'rotate-180' : ''}`}
               />
             </button>
 
@@ -130,7 +130,7 @@ export default function Header({ hasUnreadFeedback, isFeedbackOpen, onFeedbackCl
                         alt={githubUsername || 'User'}
                         width={36}
                         height={36}
-                        className="rounded-full flex-shrink-0"
+                        className="rounded-full flex-shrink-0 aspect-square object-cover"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-gray-900 truncate">

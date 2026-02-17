@@ -4,11 +4,11 @@ import { TABLE_NAMES } from './constants'
 // 5 badges based on points - LOTR Theme
 // Each challenge = 100 points, max 500 points = 5 challenges
 export const BADGE_DEFINITIONS = [
-  { level: 100, name: 'Hobbit', icon: '🍽️', description: 'First Step - Completa tu primer reto' },
-  { level: 200, name: 'Ranger', icon: '🌲', description: 'The Road Goes Ever On - Completa 2 retos' },
-  { level: 300, name: 'Elf', icon: '🌿', description: 'Elven Wisdom - Completa 3 retos' },
-  { level: 400, name: 'Dwarf', icon: '⛏️', description: 'Under the Mountain - Completa 4 retos' },
-  { level: 500, name: 'King', icon: '👑', description: 'The Return of the King - Completa todos los retos' },
+  { level: 100, name: 'Hobbit', icon: 'cookie', description: 'First Step - Completa tu primer reto' },
+  { level: 200, name: 'Ranger', icon: 'sword', description: 'The Road Goes Ever On - Completa 2 retos' },
+  { level: 300, name: 'Elf', icon: 'tree', description: 'Elven Wisdom - Completa 3 retos' },
+  { level: 400, name: 'Dwarf', icon: 'shield', description: 'Under the Mountain - Completa 4 retos' },
+  { level: 500, name: 'King', icon: 'crown', description: 'The Return of the King - Completa todos los retos' },
 ] as const
 
 export type BadgeLevel = typeof BADGE_DEFINITIONS[number]['level']

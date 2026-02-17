@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { BADGE_DEFINITIONS, BadgeInfo } from '@/lib/badges'
+import { getBadgeIcon } from '@/lib/badgeIcons'
 
 interface BadgesListProps {
   readonly badges: BadgeInfo[];
@@ -66,7 +67,7 @@ export default function BadgesList({ badges, currentPoints }: BadgesListProps) {
             >
               {/* Badge icon */}
               <div className="text-2xl mb-1">
-                {isEarned ? def.icon : '🔒'}
+                {isEarned ? getBadgeIcon(def.icon, 24) : '🔒'}
               </div>
 
               {/* Name */}
@@ -93,7 +94,7 @@ export default function BadgesList({ badges, currentPoints }: BadgesListProps) {
         <div className="mt-4 p-3 bg-slate-700/50 rounded-xl text-center">
           <p className="text-sm text-slate-300">
             <span className="text-amber-400 font-bold">{nextBadge.level - currentPoints}</span>
-            {' '}pts to unlock {nextBadge.icon} {nextBadge.name}
+            {' '}pts to unlock {getBadgeIcon(nextBadge.icon, 24)} {nextBadge.name}
           </p>
         </div>
       )}

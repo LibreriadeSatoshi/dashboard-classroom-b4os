@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { BADGE_DEFINITIONS, BadgeInfo } from '@/lib/badges'
 import { Trophy } from 'phosphor-react'
+import { getBadgeIcon } from '@/lib/badgeIcons';
 
 interface UserBadgesDropdownProps {
   readonly badges: BadgeInfo[];
@@ -35,7 +36,7 @@ export default function UserBadgesDropdown({ badges, currentPoints }: UserBadges
       {highestBadge ? (
         <div className="flex items-center gap-2 p-1.5 bg-white rounded-md border border-amber-200">
           <div className="text-xl leading-none">
-            {highestBadge.icon}
+            {getBadgeIcon(highestBadge.icon, 20)}
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-xs font-bold text-amber-800 truncate">

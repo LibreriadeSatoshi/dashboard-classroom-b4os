@@ -1,6 +1,7 @@
 'use client';
 
 import { Bell, Trophy } from 'phosphor-react';
+import { getBadgeIcon } from '@/lib/badgeIcons';
 
 interface FeedbackBellProps {
   hasUnreadFeedback: boolean;
@@ -57,7 +58,7 @@ const FeedbackBell = ({
                 🎉 Badge Earned!
               </p>
               <p className="text-xs text-white/90">
-                {newlyEarnedBadge.icon} {newlyEarnedBadge.name}
+                {getBadgeIcon(newlyEarnedBadge.icon, 16)} {newlyEarnedBadge.name}
               </p>
             </div>
           </div>

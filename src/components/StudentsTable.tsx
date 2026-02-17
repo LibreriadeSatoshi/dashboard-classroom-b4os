@@ -5,6 +5,7 @@ import { useState, useMemo, useEffect, Fragment } from 'react'
 import { useSession } from 'next-auth/react'
 import { type Assignment, type ConsolidatedGrade, type StudentFeedback } from '@/lib/supabase'
 import { MagnifyingGlass, Funnel, CaretUp, CaretDown, Crown, ChatCircleText, CaretRight } from 'phosphor-react'
+import { getBadgeIcon } from '@/lib/badgeIcons'
 import {
   generateAnonymousId,
   findUserByRealUsername,
@@ -255,6 +256,14 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
     return null
   }, [searchTerm, grades, isAdmin, currentUsername])
 
+  // Helper for sorting comparison (must be defined before useMemo)
+  const compareValues = (aValue: string | number, bValue: string | number, direction: SortDirection) => {
+    if (direction === 'asc') {
+      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
+    }
+    return aValue > bValue ? -1 : aValue < bValue ? 1 : 0
+  }
+
   // Filter and sort grouped users
   const filteredAndSortedUsers = useMemo(() => {
     let filtered = groupedUsers
@@ -325,14 +334,6 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
       setSortField(field)
       setSortDirection('asc')
     }
-  }
-
-  // Helper for sorting comparison
-  const compareValues = (aValue: string | number, bValue: string | number, direction: SortDirection) => {
-    if (direction === 'asc') {
-      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
-    }
-    return aValue > bValue ? -1 : aValue < bValue ? 1 : 0
   }
 
   const getSortIcon = (field: SortField) => {
@@ -479,7 +480,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
                 onClick={() => handleSort('challenge_count')}
               >
                 <div className="flex items-center gap-1 md:gap-2">
-                  <span className="hidden md:inline">Retos</span>
+                  <span className="hidden md:inline">{t('challenges')}</span>
                   <span className="md:hidden">🎯</span>
                   {getSortIcon('challenge_count')}
                 </div>
@@ -489,7 +490,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
                 onClick={() => handleSort('average_percentage')}
               >
                 <div className="flex items-center gap-2">
-                  Promedio
+                  {t('average')}
                   {getSortIcon('average_percentage')}
                 </div>
               </th>
@@ -559,12 +560,12 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
                     <td className="px-2 py-3 whitespace-nowrap md:px-4">
                       <div className="flex flex-col gap-1">
                         <span className="text-xs md:text-sm text-gray-600">
-                          {user.challengeCount} {user.challengeCount === 1 ? 'reto' : 'retos'}
+                          {user.challengeCount} {user.challengeCount === 1 ? t('challenge_singular') : t('challenge_plural')}
                         </span>
                         {/* Expand indicator - always show for all users with challenges */}
                         <span className="inline-flex items-center gap-1 text-gray-400">
                           <CaretRight className={`h-3 w-3 md:h-4 md:w-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-                          <span className="text-[10px] hidden md:inline">detalles</span>
+                          <span className="text-[10px] hidden md:inline">{t('details')}</span>
                         </span>
                       </div>
                     </td>
@@ -596,7 +597,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
                       {userBadge ? (
                         <div className="flex flex-col items-start">
                           <div className="inline-flex items-center gap-0.5 md:gap-1 px-1 md:px-2 py-0.5 md:py-1 rounded-full text-[10px] md:text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                            <span>{userBadge.icon}</span>
+                            <span>{getBadgeIcon(userBadge.icon, 14)}</span>
                             <span className="hidden lg:inline">{userBadge.name}</span>
                           </div>
                         </div>
@@ -611,7 +612,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
                       <td colSpan={4} className="px-6 py-4">
                         <div className="ml-8 space-y-2">
                           <div className="text-sm font-medium text-gray-700 mb-2">
-                            Detalles de retos ({user.challengeCount})
+                            {t('challengeDetails')} ({user.challengeCount})
                           </div>
                           {user.grades.map((grade, idx) => {
                             // Each challenge is worth 100 points
@@ -638,7 +639,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
                                     </span>
                                     {gradeBadge && (
                                       <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700">
-                                        {gradeBadge.icon} {gradeBadge.name}
+                                        {getBadgeIcon(gradeBadge.icon, 14)} {gradeBadge.name}
                                       </span>
                                     )}
                                     {gradeFeedback.length > 0 && (
