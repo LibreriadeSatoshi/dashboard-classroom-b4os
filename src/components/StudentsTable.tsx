@@ -3,8 +3,9 @@
 
 import { useState, useMemo, useEffect, Fragment } from 'react'
 import { useSession } from 'next-auth/react'
-import { type Student, type Assignment, type ConsolidatedGrade, type StudentFeedback } from '@/lib/supabase'
+import { type Assignment, type ConsolidatedGrade, type StudentFeedback } from '@/lib/supabase'
 import { MagnifyingGlass, Funnel, CaretUp, CaretDown, Crown, ChatCircleText, CaretRight } from 'phosphor-react'
+import { getBadgeIcon } from '@/lib/badgeIcons'
 import {
   generateAnonymousId,
   findUserByRealUsername,
@@ -13,19 +14,28 @@ import {
 import LOTRAvatar from './LOTRAvatar'
 import { useNamePreference } from '@/contexts/NamePreferenceContext'
 import { useTranslations } from 'next-intl'
-import { filterValidGrades, calculateGradePercentage } from '@/utils/gradeFilters'
+import { filterValidGrades } from '@/utils/gradeFilters'
+import { BADGE_DEFINITIONS } from '@/lib/badges'
 
 interface StudentsTableProps {
-  students: Student[]
-  assignments: Assignment[]
-  grades: ConsolidatedGrade[]
-  feedback: StudentFeedback[]
-  showRealNames?: boolean
-  averageGrade: number // Added averageGrade prop
+  readonly assignments: Assignment[]
+  readonly grades: ConsolidatedGrade[]
+  readonly feedback: StudentFeedback[]
+  readonly showRealNames?: boolean
+  readonly averageGrade: number
 }
 
-type SortField = 'github_username' | 'assignment_name' | 'points_awarded' | 'points_available' | 'percentage'
+type SortField = 'github_username' | 'challenge_count' | 'total_points' | 'average_percentage'
 type SortDirection = 'asc' | 'desc'
+
+// Type for grouped user data
+interface GroupedUserData {
+  githubUsername: string
+  grades: ConsolidatedGrade[]
+  totalPoints: number
+  averagePercentage: number
+  challengeCount: number
+}
 
 export default function StudentsTable({ assignments, grades, feedback, showRealNames = true, averageGrade }: StudentsTableProps) {
   const { data: session } = useSession()
@@ -38,6 +48,76 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
 
   // Filter valid grades using centralized business logic
   const validGrades = filterValidGrades(grades)
+
+  // Calculate total points and badge for each user
+  const userPointsMap = useMemo(() => {
+    const map: Record<string, number> = {}
+    validGrades.forEach(grade => {
+      if (!map[grade.github_username]) {
+        map[grade.github_username] = 0
+      }
+      map[grade.github_username] += Number(grade.points_awarded || 0)
+    })
+    return map
+  }, [validGrades])
+
+  // Group grades by user for grouped table view
+  const userGradesMap = useMemo(() => {
+    const map: Record<string, ConsolidatedGrade[]> = {}
+    validGrades.forEach(grade => {
+      if (!map[grade.github_username]) {
+        map[grade.github_username] = []
+      }
+      map[grade.github_username].push(grade)
+    })
+    return map
+  }, [validGrades])
+
+  // Calculate total based on ALL assignments in the system, not just the graded ones
+  const totalSystemPoints = useMemo(() => {
+    return assignments.length * 100;
+  }, [assignments]);
+
+  // Create grouped users array with aggregated data
+  const groupedUsers = useMemo((): GroupedUserData[] => {
+    const result = Object.entries(userGradesMap).map(([username, userGrades]) => {
+      const totalPoints = userGrades.reduce((sum, g) => sum + Number(g.points_awarded || 0), 0)
+      
+      // 2. Calculate the group average percentage
+      // Prevent division by zero if no points are available in the system
+      const rawPercentage = totalSystemPoints > 0 ? (totalPoints / totalSystemPoints) * 100 : 0;
+      // Round to one decimal place to ensure UI consistency, and cap at 100%
+      const averagePercentage = Math.min(Math.round(rawPercentage * 10) / 10, 100);
+      
+      return {
+        githubUsername: username,
+        grades: userGrades,
+        totalPoints,
+        averagePercentage,
+        challengeCount: userGrades.length
+      }
+    })
+    return result
+  }, [userGradesMap, totalSystemPoints])
+
+  // Get badge for a user based on their total points
+  const getUserBadge = (githubUsername: string) => {
+    const points = userPointsMap[githubUsername] || 0
+    // Find the highest badge the user has earned
+    const earnedBadge = [...BADGE_DEFINITIONS].reverse().find(def => points >= def.level)
+    return earnedBadge || null
+  }
+
+  // Get badge for a specific assignment based on points earned
+  const getAssignmentBadge = (pointsAwarded: number, pointsAvailable: number) => {
+    if (!pointsAwarded || !pointsAvailable) return null
+    // Calculate what percentage of the assignment was completed
+    const percentage = (pointsAwarded / pointsAvailable) * 100
+    // Map percentage to badge thresholds (each badge = 100 points = passing an assignment)
+    const badgeLevel = Math.floor(percentage / 20) * 100 // 0-19=0, 20-39=100, 40-59=200, etc.
+    const earnedBadge = BADGE_DEFINITIONS.find(def => def.level === badgeLevel) || null
+    return earnedBadge
+  }
 
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedAssignment, setSelectedAssignment] = useState('')
@@ -73,7 +153,10 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
         const response = await fetch('/api/user-preferences')
 
         if (!response.ok) {
-          console.error('Error loading user preferences:', response.statusText)
+          // Silently ignore 401 (not authenticated) - this is expected
+          if (response.status !== 401) {
+            console.error('Error loading user preferences:', response.statusText)
+          }
           return
         }
 
@@ -106,7 +189,10 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
         const response = await fetch('/api/user-preferences')
 
         if (!response.ok) {
-          console.error('Error loading user preferences:', response.statusText)
+          // Silently ignore 401 (not authenticated) - this is expected
+          if (response.status !== 401) {
+            console.error('Error loading user preferences:', response.statusText)
+          }
           return
         }
 
@@ -170,36 +256,36 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
     return null
   }, [searchTerm, grades, isAdmin, currentUsername])
 
-  // Filter and sort data
-  const filteredAndSortedGrades = useMemo(() => {
-    let filtered = validGrades
+  // Helper for sorting comparison (must be defined before useMemo)
+  const compareValues = (aValue: string | number, bValue: string | number, direction: SortDirection) => {
+    if (direction === 'asc') {
+      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
+    }
+    return aValue > bValue ? -1 : aValue < bValue ? 1 : 0
+  }
+
+  // Filter and sort grouped users
+  const filteredAndSortedUsers = useMemo(() => {
+    let filtered = groupedUsers
 
     // Filter by search term
     if (searchTerm) {
-      filtered = filtered.filter(grade => {
-        const anonymousId = generateAnonymousId(grade.github_username)
-        const canSearchRealName = isAdmin || userPreferences[grade.github_username] || grade.github_username === currentUsername
+      filtered = filtered.filter(user => {
+        const anonymousId = generateAnonymousId(user.githubUsername)
+        const canSearchRealName = isAdmin || userPreferences[user.githubUsername] || user.githubUsername === currentUsername
 
         return (
           anonymousId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          grade.assignment_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (canSearchRealName && grade.github_username.toLowerCase().includes(searchTerm.toLowerCase()))
+          (canSearchRealName && user.githubUsername.toLowerCase().includes(searchTerm.toLowerCase()))
         )
       })
     }
 
-    // Filter by assignment
-    if (selectedAssignment) {
-      filtered = filtered.filter(grade => 
-        grade.assignment_name === selectedAssignment
-      )
-    }
-
-    // If user searched their real username, move their records to top
+    // If user searched their real username, move their record to top
     if (searchedUserInfo) {
       filtered = filtered.sort((a, b) => {
-        const aIsSearched = a.github_username.toLowerCase() === searchedUserInfo.realUsername.toLowerCase()
-        const bIsSearched = b.github_username.toLowerCase() === searchedUserInfo.realUsername.toLowerCase()
+        const aIsSearched = a.githubUsername.toLowerCase() === searchedUserInfo.realUsername.toLowerCase()
+        const bIsSearched = b.githubUsername.toLowerCase() === searchedUserInfo.realUsername.toLowerCase()
         if (aIsSearched && !bIsSearched) return -1
         if (!aIsSearched && bIsSearched) return 1
         return 0
@@ -208,28 +294,37 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
 
     // Sort data
     filtered.sort((a, b) => {
-      let aValue: string | number = a[sortField] as string | number
-      let bValue: string | number = b[sortField] as string | number
+      let aValue: string | number
+      let bValue: string | number
 
-      if (sortField === 'percentage') {
-        aValue = calculateGradePercentage(a.points_awarded || 0, a.points_available || 0)
-        bValue = calculateGradePercentage(b.points_awarded || 0, b.points_available || 0)
-      }
-
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        aValue = aValue.toLowerCase()
-        bValue = bValue.toLowerCase()
+      switch (sortField) {
+        case 'github_username':
+          aValue = a.githubUsername.toLowerCase()
+          bValue = b.githubUsername.toLowerCase()
+          break
+        case 'challenge_count':
+          aValue = a.challengeCount
+          bValue = b.challengeCount
+          break
+        case 'total_points':
+          aValue = a.totalPoints
+          bValue = b.totalPoints
+          break
+        case 'average_percentage':
+          aValue = a.averagePercentage
+          bValue = b.averagePercentage
+          break
       }
 
       if (sortDirection === 'asc') {
-        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
+        return compareValues(aValue, bValue, 'asc')
       } else {
-        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0
+        return compareValues(aValue, bValue, 'desc')
       }
     })
 
     return filtered
-  }, [validGrades, searchTerm, selectedAssignment, sortField, sortDirection, searchedUserInfo, isAdmin, currentUsername, userPreferences])
+  }, [groupedUsers, searchTerm, sortField, sortDirection, searchedUserInfo, isAdmin, currentUsername, userPreferences])
 
 
   const handleSort = (field: SortField) => {
@@ -258,6 +353,39 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
     if (percentage >= 60) return 'bg-yellow-100'
     if (percentage >= 40) return 'bg-orange-100'
     return 'bg-red-100'
+  }
+
+  // Get progress bar color
+  const getProgressBarColor = (percentage: number) => {
+    if (percentage >= 80) return 'bg-green-500'
+    if (percentage >= 60) return 'bg-yellow-500'
+    if (percentage >= 40) return 'bg-orange-500'
+    return 'bg-red-500'
+  }
+
+  // Get average comparison info
+  const getAverageComparison = (isCurrentUser: boolean, userPercentage: number) => {
+    if (!isCurrentUser) return { comparison: '', icon: null, color: '' }
+    
+    if (userPercentage > averageGrade) {
+      return {
+        comparison: t('aboveAverage'),
+        icon: <CaretUp size={14} className="text-green-500" />,
+        color: 'text-green-700'
+      }
+    }
+    if (userPercentage < averageGrade) {
+      return {
+        comparison: t('belowAverage'),
+        icon: <CaretDown size={14} className="text-red-500" />,
+        color: 'text-red-700'
+      }
+    }
+    return {
+      comparison: t('onPar'),
+      icon: <CaretRight size={14} className="text-gray-500" />,
+      color: 'text-gray-700'
+    }
   }
 
   return (
@@ -331,177 +459,132 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
 
       </div>
 
-      {/* Table */}
+      {/* Table - Responsive without horizontal scroll */}
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full min-w-0">
           <thead className="bg-gray-50">
             <tr>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 md:px-4 md:py-3 w-1/4"
                 onClick={() => handleSort('github_username')}
               >
-                <div className="flex items-center gap-2">
-                  <Crown className="h-4 w-4 text-amber-500" />
-                  {t('inhabitant')}
+                <div className="flex items-center gap-1 md:gap-2">
+                  <Crown className="h-3 w-3 md:h-4 md:w-4 text-amber-500" />
+                  <span className="hidden sm:inline">{t('inhabitant')}</span>
+                  <span className="sm:hidden">👤</span>
                   {getSortIcon('github_username')}
                 </div>
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('assignment_name')}
+                className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 md:px-4 md:py-3 w-20"
+                onClick={() => handleSort('challenge_count')}
               >
-                <div className="flex items-center gap-2">
-                  {t('challenge')}
-                  {getSortIcon('assignment_name')}
+                <div className="flex items-center gap-1 md:gap-2">
+                  <span className="hidden md:inline">{t('challenges')}</span>
+                  <span className="md:hidden">🎯</span>
+                  {getSortIcon('challenge_count')}
                 </div>
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('points_awarded')}
+                className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 md:px-4 md:py-3 w-1/3"
+                onClick={() => handleSort('average_percentage')}
               >
                 <div className="flex items-center gap-2">
-                  {t('pointsAwarded')}
-                  {getSortIcon('points_awarded')}
+                  {t('average')}
+                  {getSortIcon('average_percentage')}
                 </div>
               </th>
-              <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('points_available')}
-              >
-                <div className="flex items-center gap-2">
-                  {t('pointsAvailable')}
-                  {getSortIcon('points_available')}
-                </div>
-              </th>
-              <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('percentage')}
-              >
-                <div className="flex items-center gap-2">
-                  {t('percentage')}
-                  {getSortIcon('percentage')}
+              <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:px-4 md:py-3 w-24">
+                <div className="flex items-center gap-1 md:gap-2">
+                  <span className="hidden md:inline">🏆</span>
+                  <span className="md:hidden">🏅</span>
+                  <span className="hidden lg:inline">{t('badge')}</span>
                 </div>
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filteredAndSortedGrades.map((grade, index) => {
-              const percentage = calculateGradePercentage(grade.points_awarded || 0, grade.points_available || 0)
-              const displayName = getDisplayName(grade.github_username)
-              const description = getDisplayDescription(grade.github_username)
-              const isSearchedUser = searchedUserInfo?.realUsername.toLowerCase() === grade.github_username.toLowerCase()
-              const isCurrentUser = currentUsername === grade.github_username && !isAdmin // Identify current student
-              const rowKey = `${grade.github_username}-${grade.assignment_name}-${index}`
-              const assignmentFeedback = getFeedbackForAssignment(grade.github_username, grade.assignment_name)
-              const hasFeedback = assignmentFeedback.length > 0
+            {filteredAndSortedUsers.map((user) => {
+              const displayName = getDisplayName(user.githubUsername)
+              const description = getDisplayDescription(user.githubUsername)
+              const isSearchedUser = searchedUserInfo?.realUsername.toLowerCase() === user.githubUsername.toLowerCase()
+              const isCurrentUser = currentUsername === user.githubUsername && !isAdmin
+              const rowKey = user.githubUsername
               const isExpanded = expandedRows.has(rowKey)
-
-              // Determine comparison with average
-              let averageComparison = ''
-              let comparisonIcon = null
-              let comparisonColor = ''
-
-              if (isCurrentUser) {
-                if (percentage > averageGrade) {
-                  averageComparison = t('aboveAverage')
-                  comparisonIcon = <CaretUp size={14} className="text-green-500" />
-                  comparisonColor = 'text-green-700'
-                } else if (percentage < averageGrade) {
-                  averageComparison = t('belowAverage')
-                  comparisonIcon = <CaretDown size={14} className="text-red-500" />
-                  comparisonColor = 'text-red-700'
-                } else {
-                  averageComparison = t('onPar')
-                  comparisonIcon = <CaretRight size={14} className="text-gray-500" />
-                  comparisonColor = 'text-gray-700'
-                }
-              }
+              const userBadge = getUserBadge(user.githubUsername)
+              const { comparison: averageComparison, icon: comparisonIcon, color: comparisonColor } = getAverageComparison(isCurrentUser, user.averagePercentage)
 
               return (
                 <Fragment key={rowKey}>
                   <tr
-                    className={`hover:bg-gray-50 transition-colors duration-200 ${
+                    className={`hover:bg-gray-100 transition-colors duration-200 cursor-pointer ${
                       isSearchedUser ? 'bg-amber-50 border-l-4 border-amber-500 shadow-sm' : ''
-                    } ${isCurrentUser ? 'bg-blue-50 border-l-4 border-blue-500 shadow-sm' : ''} ${hasFeedback ? 'cursor-pointer' : ''}`}
-                    onClick={hasFeedback ? () => toggleRowExpanded(rowKey) : undefined}
+                    } ${isCurrentUser ? 'bg-blue-50 border-l-4 border-blue-500 shadow-sm' : ''}`}
+                    onClick={() => toggleRowExpanded(rowKey)}
+                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && toggleRowExpanded(rowKey)}
+                    tabIndex={0}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 py-3 whitespace-nowrap md:px-4">
                       <div className="flex items-center">
                         <div className="flex-shrink-0">
                           <LOTRAvatar
-                            githubUsername={grade.github_username}
-                            size="lg"
-                            className="transition-transform duration-200 hover:scale-110"
+                            githubUsername={user.githubUsername}
+                            size="sm"
+                            className="transition-transform duration-200 hover:scale-110 md:size-lg"
                           />
                         </div>
-                        <div className="ml-3">
-                          <div className="flex items-center gap-2">
-                            <div className="text-sm font-medium text-gray-900">
+                        <div className="ml-2 md:ml-3">
+                          <div className="flex items-center gap-1 md:gap-2">
+                            <div className="text-xs md:text-sm font-medium text-gray-900 truncate max-w-[80px] md:max-w-none">
                               {displayName}
                             </div>
                             {isSearchedUser && (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
-                                <Crown className="h-3 w-3 mr-1" />
-                                {t('itsYou')}
+                              <span className="inline-flex items-center px-1 py-0.5 md:px-2 md:py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                                <Crown className="h-2 w-2 md:h-3 md:w-3 mr-0.5 md:mr-1" />
+                                <span className="hidden md:inline">{t('itsYou')}</span>
                               </span>
                             )}
-                            {isCurrentUser && ( // New indicator for current user
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                                <Crown className="h-3 w-3 mr-1" />
-                                {t('yourPosition')}
+                            {isCurrentUser && (
+                              <span className="inline-flex items-center px-1 py-0.5 md:px-2 md:py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                                <Crown className="h-2 w-2 md:h-3 md:w-3 mr-0.5 md:mr-1" />
+                                <span className="hidden md:inline">{t('yourPosition')}</span>
                               </span>
                             )}
                           </div>
-                          <div className="text-xs text-gray-500 italic">
+                          <div className="text-[10px] md:text-xs text-gray-500 italic hidden sm:block">
                             {description}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">
-                          {grade.assignment_name}
+                    <td className="px-2 py-3 whitespace-nowrap md:px-4">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs md:text-sm text-gray-600">
+                          {user.challengeCount} {user.challengeCount === 1 ? t('challenge_singular') : t('challenge_plural')}
                         </span>
-                        {hasFeedback && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">
-                            <ChatCircleText className="h-3 w-3" />
-                            {t('feedback')}
-                            <CaretRight className={`h-3 w-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-                          </span>
-                        )}
+                        {/* Expand indicator - always show for all users with challenges */}
+                        <span className="inline-flex items-center gap-1 text-gray-400">
+                          <CaretRight className={`h-3 w-3 md:h-4 md:w-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                          <span className="text-[10px] hidden md:inline">{t('details')}</span>
+                        </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {grade.points_awarded || 0}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-600">
-                        {grade.points_available || 0}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 break-word">
-                      <div className="flex flex-col items-start gap-1"> {/* Changed to flex-col for better mobile display */}
-                        <div className="flex items-center gap-3">
+                    <td className="px-2 py-3 break-word md:px-4">
+                      <div className="flex flex-col items-start gap-1">
+                        <div className="flex items-center gap-2 md:gap-3">
                           {/* Barra de progreso */}
-                          <div className="w-16 bg-gray-200 rounded-full h-2">
+                          <div className="w-10 md:w-16 bg-gray-200 rounded-full h-1.5 md:h-2">
                             <div
-                              className={`h-2 rounded-full transition-all duration-300 ${
-                                percentage >= 80 ? 'bg-green-500' :
-                                percentage >= 60 ? 'bg-yellow-500' :
-                                percentage >= 40 ? 'bg-orange-500' : 'bg-red-500'
-                              }`}
-                              style={{width: `${Math.min(percentage, 100)}%`}}
+                              className={`h-1.5 md:h-2 rounded-full transition-all duration-300 ${getProgressBarColor(user.averagePercentage)}`}
+                              style={{width: `${Math.min(user.averagePercentage, 100)}%`}}
                             ></div>
                           </div>
                           {/* Porcentaje con pill */}
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getGradeBgColor(percentage)} ${getGradeColor(percentage)}`}>
-                            {percentage}%
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] md:text-xs font-medium ${getGradeBgColor(user.averagePercentage)} ${getGradeColor(user.averagePercentage)}`}>
+                            {Math.round(user.averagePercentage)}%
                           </span>
                         </div>
-                        {isCurrentUser && averageComparison && ( // Display comparison for current user
+                        {isCurrentUser && averageComparison && (
                           <div className={`flex items-center gap-1 text-xs font-medium ${comparisonColor}`}>
                             {comparisonIcon}
                             {averageComparison} ({t('classAverage')}: {averageGrade}%)
@@ -509,24 +592,89 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
                         )}
                       </div>
                     </td>
-                  </tr>
-                  {/* Expanded feedback row */}
-                  {hasFeedback && isExpanded && (
-                    <tr key={`${rowKey}-feedback`} className="bg-amber-50">
-                      <td colSpan={5} className="px-6 py-4">
-                        <div className="ml-12 space-y-3">
-                          <div className="flex items-center gap-2 text-sm font-medium text-amber-800">
-                            <ChatCircleText className="h-4 w-4" />
-                            {t('tutorFeedback')}
+                    {/* Badge Column */}
+                    <td className="px-1 py-3 whitespace-nowrap md:px-4">
+                      {userBadge ? (
+                        <div className="flex flex-col items-start">
+                          <div className="inline-flex items-center gap-0.5 md:gap-1 px-1 md:px-2 py-0.5 md:py-1 rounded-full text-[10px] md:text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                            <span>{getBadgeIcon(userBadge.icon, 14)}</span>
+                            <span className="hidden lg:inline">{userBadge.name}</span>
                           </div>
-                          {assignmentFeedback.map((fb, fbIndex) => (
-                            <div key={fbIndex} className="bg-white border border-amber-200 rounded-lg p-4 shadow-sm">
-                              <p className="text-sm text-gray-700 whitespace-pre-wrap">{fb.feedback_for_student}</p>
-                              <p className="text-xs text-gray-500 mt-2 italic">
-                                — {fb.reviewer_username}
-                              </p>
-                            </div>
-                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-gray-400">-</span>
+                      )}
+                    </td>
+                  </tr>
+                  {/* Expanded row - show challenge details */}
+                  {isExpanded && (
+                    <tr key={`${rowKey}-details`} className="bg-gray-50">
+                      <td colSpan={4} className="px-6 py-4">
+                        <div className="ml-8 space-y-2">
+                          <div className="text-sm font-medium text-gray-700 mb-2">
+                            {t('challengeDetails')} ({user.challengeCount})
+                          </div>
+                          {user.grades.map((grade, idx) => {
+                            // Each challenge is worth 100 points
+                            const CHALLENGE_POINTS = 100
+                            const pointsAwarded = Number(grade.points_awarded) || 0
+                            // Handle NaN case
+                            const safePointsAwarded = Number.isNaN(pointsAwarded) ? 0 : pointsAwarded
+                            const gradePercentage = CHALLENGE_POINTS > 0 ? (safePointsAwarded / CHALLENGE_POINTS) * 100 : 0
+                            const gradeFeedback = getFeedbackForAssignment(user.githubUsername, grade.assignment_name)
+                            const gradeBadge = getAssignmentBadge(pointsAwarded, 100)
+                            const gradeRowKey = `${user.githubUsername}-${grade.assignment_name}`
+                            const isGradeExpanded = expandedRows.has(gradeRowKey)
+                            
+                            return (
+                              <div key={gradeRowKey}>
+                                <button
+                                  type="button"
+                                  className={`flex items-center justify-between bg-white border border-gray-200 rounded-lg p-3 shadow-sm w-full text-left ${gradeFeedback.length > 0 ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+                                  onClick={() => gradeFeedback.length > 0 && toggleRowExpanded(gradeRowKey)}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <span className="text-xs md:text-sm text-gray-600">
+                                      {grade.assignment_name}
+                                    </span>
+                                    {gradeBadge && (
+                                      <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700">
+                                        {getBadgeIcon(gradeBadge.icon, 14)} {gradeBadge.name}
+                                      </span>
+                                    )}
+                                    {gradeFeedback.length > 0 && (
+                                      <span className="inline-flex items-center gap-1 px-1 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700">
+                                        <ChatCircleText className="h-2 w-2" />
+                                        <CaretRight className={`h-2 w-2 transition-transform ${isGradeExpanded ? 'rotate-90' : ''}`} />
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${getGradeBgColor(gradePercentage)} ${getGradeColor(gradePercentage)}`}>
+                                      {safePointsAwarded}/100 ({Math.round(gradePercentage)}%)
+                                    </span>
+                                  </div>
+                                </button>
+                                {/* Feedback content - expandable */}
+                                {gradeFeedback.length > 0 && isGradeExpanded && (
+                                  <div className="bg-amber-50 border border-t-0 border-amber-200 rounded-b-lg p-3 -mt-1 mb-2">
+                                    <div className="flex items-center gap-2 text-xs font-medium text-amber-800 mb-2">
+                                      <ChatCircleText className="h-3 w-3" />
+                                      {t('tutorFeedback')}
+                                    </div>
+                                    {gradeFeedback.map((fb) => (
+                                      <div key={fb.reviewer_username || fb.assignment_name} className="bg-white border border-amber-200 rounded-lg p-3 shadow-sm mb-2 last:mb-0">
+                                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{fb.feedback_for_student}</p>
+                                        <p className="text-xs text-gray-500 mt-2 italic">
+                                          — {fb.reviewer_username}
+                                        </p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
                         </div>
                       </td>
                     </tr>
@@ -542,7 +690,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-xl">
          <div className="flex items-center justify-center text-sm text-gray-600">
            <span>
-             {t('showing')} {filteredAndSortedGrades.length} {t('of')} {validGrades.length} {t('records')}
+             {t('showing')} {filteredAndSortedUsers.length} {t('of')} {groupedUsers.length} {t('records')}
            </span>
          </div>
        </div>

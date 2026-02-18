@@ -17,6 +17,7 @@ export default async function Dashboard() {
   // Fetch dashboard data on server - RBAC is applied here
   let dashboardData
   let assignmentProgressData: AssignmentProgress[]
+
   try {
     dashboardData = await getDashboardData() // Server-side only
     assignmentProgressData = await getAssignmentProgressData(session.user.githubUsername)
@@ -37,8 +38,10 @@ export default async function Dashboard() {
   // Server-rendered, not exposed in network tab
   return (
     <ProtectedRoute>
-      <DashboardClient initialData={dashboardData} assignmentProgressData={assignmentProgressData} />
+      <DashboardClient 
+        initialData={dashboardData} 
+        assignmentProgressData={assignmentProgressData}
+      />
     </ProtectedRoute>
   )
 }
-

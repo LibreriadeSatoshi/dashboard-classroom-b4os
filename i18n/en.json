@@ -18,6 +18,17 @@
     "classAveragePercentage": "Class Avg",
     "yourTrend": "Your Trend"
   },
+  "badges": {
+    "title": "Achievements",
+    "unlockedCount": "{unlocked}/{total} badges",
+    "badgeEarned": "Badge Earned!",
+    "pointsToNext": "{points} more points to next badge",
+    "allEarned": "All badges earned!",
+    "level": "Level",
+    "badge": "Badge",
+    "pointsToUnlock": "{points} pts to unlock",
+    "keepStudying": "Keep studying to earn recognition in Middle-earth"
+  },
   "dashboard": {
     "title": "Middle-earth Council",
     "subtitle": "of Kingdom Adventures and Achievements",
@@ -54,6 +65,12 @@
     "allAdventures": "All adventures",
     "inhabitant": "Middle-earth Inhabitant",
     "challenge": "Adventure",
+    "challengeDetails": "Challenge Details",
+    "challenges": "Challenges",
+    "challenge_singular": "Challenge",
+    "challenge_plural": "Challenges",
+    "details": "Details",
+    "average": "Average",
     "pointsAwarded": "Points Awarded",
     "pointsAvailable": "Points Available",
     "percentage": "Percentage",
@@ -68,7 +85,8 @@
     "records": "records",
     "points": "pts",
     "feedback": "Feedback",
-    "tutorFeedback": "Tutor Feedback"
+    "tutorFeedback": "Tutor Feedback",
+    "badge": "Badge"
   },
   "auth": {
     "signIn": "Sign In",

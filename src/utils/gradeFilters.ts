@@ -25,11 +25,10 @@ export function filterValidGrades(grades: ConsolidatedGrade[]): ConsolidatedGrad
  * Calculates the percentage score for a grade
  */
 export function calculateGradePercentage(pointsAwarded: number, pointsAvailable: number): number {
-  if (pointsAvailable > 0) {
-    return Math.round((pointsAwarded / pointsAvailable) * 100)
-  } else if (pointsAwarded > 0) {
-    return 100
+  // Handle invalid cases - if no points available or invalid inputs, return 0
+  if (!pointsAvailable || pointsAvailable <= 0) {
+    return 0
   }
-  return 0
+  return Math.round((pointsAwarded / pointsAvailable) * 100)
 }
 

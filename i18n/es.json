@@ -18,6 +18,17 @@
     "classAveragePercentage": "Promedio Clase",
     "yourTrend": "Tu Tendencia"
   },
+  "badges": {
+    "title": "Logros",
+    "unlockedCount": "{unlocked}/{total} insignias",
+    "badgeEarned": "¡Insignia Obtenida!",
+    "pointsToNext": "{points} puntos más para la siguiente insignia",
+    "allEarned": "¡Todas las insignias obtenidas!",
+    "level": "Nivel",
+    "badge": "Insignia",
+    "pointsToUnlock": "{points} pts para desbloquear",
+    "keepStudying": "Sigue estudiando para ganar reconocimiento en la Tierra Media"
+  },
   "dashboard": {
     "title": "Consejo de la Tierra Media",
     "subtitle": "de Aventuras y Logros del Reino",
@@ -54,6 +65,12 @@
     "allAdventures": "Todas las aventuras",
     "inhabitant": "Habitante de la Tierra Media",
     "challenge": "Aventura",
+    "challengeDetails": "Detalles de retos",
+    "challenges": "Retos",
+    "challenge_singular": "Reto",
+    "challenge_plural": "Retos",
+    "details": "Detalles",
+    "average": "Promedio",
     "pointsAwarded": "Puntos Obtenidos",
     "pointsAvailable": "Puntos Disponibles",
     "percentage": "Porcentaje",
@@ -68,7 +85,8 @@
     "records": "registros",
     "points": "pts",
     "feedback": "Feedback",
-    "tutorFeedback": "Feedback del Tutor"
+    "tutorFeedback": "Feedback del Tutor",
+    "badge": "Insignia"
   },
   "auth": {
     "signIn": "Iniciar Sesión",
