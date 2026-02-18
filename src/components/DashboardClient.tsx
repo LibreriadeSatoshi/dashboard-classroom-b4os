@@ -298,7 +298,6 @@ export default function DashboardClient({ initialData, assignmentProgressData }:
           assignments={assignments}
           grades={grades}
           feedback={feedback}
-          showRealNames={showRealName}
           averageGrade={stats.averageGrade}
         />
       </div>
