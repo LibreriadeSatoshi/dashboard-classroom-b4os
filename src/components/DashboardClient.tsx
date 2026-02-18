@@ -295,7 +295,6 @@ export default function DashboardClient({ initialData, assignmentProgressData }:
 
         {/* Students Table */}
         <StudentsTable
-          students={students}
           assignments={assignments}
           grades={grades}
           feedback={feedback}
