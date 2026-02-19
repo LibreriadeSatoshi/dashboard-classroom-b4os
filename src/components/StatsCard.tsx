@@ -4,14 +4,19 @@ import { Icon } from 'phosphor-react'
 import { useTranslations } from 'next-intl'
 
 interface StatsCardProps {
-  title: string
-  value: string | number
-  icon: Icon
-  color: 'blue' | 'green' | 'purple' | 'orange'
-  descriptionKey: 'students' | 'inhabitants' | 'missions' | 'challenges' | 'kingdomGlory'
+  readonly title: string
+  readonly value: string | number
+  readonly icon: Icon
+  readonly color: 'blue' | 'green' | 'purple' | 'orange'
+  readonly descriptionKey: 'students' | 'inhabitants' | 'missions' | 'challenges' | 'kingdomGlory'
 }
 
-const colorClasses = {
+const colorClasses: Readonly<{
+  blue: string
+  green: string
+  purple: string
+  orange: string
+}> = {
   blue: 'text-gray-600 bg-gray-100',
   green: 'text-gray-600 bg-gray-100',
   purple: 'text-gray-600 bg-gray-100',
@@ -22,7 +27,7 @@ export default function StatsCard({ title, value, icon: Icon, color, description
   const t = useTranslations('stats')
 
   const getDescription = (key: string, value: string | number) => {
-    const numValue = typeof value === 'string' ? parseInt(value) || 0 : value
+    const numValue = typeof value === 'string' ? Number.parseInt(value) || 0 : value
     const isPlural = numValue !== 1
 
     switch (key) {

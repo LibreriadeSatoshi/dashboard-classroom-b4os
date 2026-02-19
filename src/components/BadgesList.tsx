@@ -42,7 +42,7 @@ export default function BadgesList({ badges, currentPoints }: BadgesListProps) {
         </div>
         <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-amber-500 to-yellow-400 transition-all duration-500"
+            className="h-full bg-linear-to-r from-amber-500 to-yellow-400 transition-all duration-500"
             style={{ width: `${(earnedCount / BADGE_DEFINITIONS.length) * 100}%` }}
           />
         </div>

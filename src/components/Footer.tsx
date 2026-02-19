@@ -12,23 +12,23 @@ export default function Footer() {
   return (
     <footer className="relative bg-slate-900 border-t border-slate-700/50 overflow-hidden">
       {/* Epic background effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"></div>
-      <div className="absolute inset-0 bg-gradient-to-r from-amber-900/5 via-transparent to-blue-900/5"></div>
+      <div className="absolute inset-0 bg-linear-to-br from-slate-900 via-slate-800 to-slate-900"></div>
+      <div className="absolute inset-0 bg-linear-to-r from-amber-900/5 via-transparent to-blue-900/5"></div>
       
       {/* Floating particles */}
       <div className="absolute inset-0 overflow-hidden">
         {[
-          { left: '20%', top: '30%', delay: '0s', duration: '3s' },
-          { left: '60%', top: '70%', delay: '1s', duration: '4s' },
-          { left: '80%', top: '20%', delay: '2s', duration: '3.5s' },
-          { left: '30%', top: '80%', delay: '0.5s', duration: '4.5s' },
-          { left: '70%', top: '40%', delay: '1.5s', duration: '2.5s' },
-          { left: '10%', top: '60%', delay: '2.5s', duration: '3.8s' },
-          { left: '90%', top: '50%', delay: '0.8s', duration: '4.2s' },
-          { left: '40%', top: '15%', delay: '1.8s', duration: '3.2s' }
-        ].map((particle, i) => (
+          { id: 'particle-1', left: '20%', top: '30%', delay: '0s', duration: '3s' },
+          { id: 'particle-2', left: '60%', top: '70%', delay: '1s', duration: '4s' },
+          { id: 'particle-3', left: '80%', top: '20%', delay: '2s', duration: '3.5s' },
+          { id: 'particle-4', left: '30%', top: '80%', delay: '0.5s', duration: '4.5s' },
+          { id: 'particle-5', left: '70%', top: '40%', delay: '1.5s', duration: '2.5s' },
+          { id: 'particle-6', left: '10%', top: '60%', delay: '2.5s', duration: '3.8s' },
+          { id: 'particle-7', left: '90%', top: '50%', delay: '0.8s', duration: '4.2s' },
+          { id: 'particle-8', left: '40%', top: '15%', delay: '1.8s', duration: '3.2s' }
+        ].map((particle) => (
           <div
-            key={i}
+            key={particle.id}
             className="absolute w-1 h-1 bg-amber-400 rounded-full animate-pulse opacity-30"
             style={{
               left: particle.left,

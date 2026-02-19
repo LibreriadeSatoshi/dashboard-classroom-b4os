@@ -7,7 +7,7 @@ import { useEffect } from 'react'
 export default function ProtectedRoute({
   children,
 }: {
-  children: React.ReactNode
+  readonly children: React.ReactNode
 }) {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -17,7 +17,6 @@ export default function ProtectedRoute({
 
     if (!session) {
       router.push('/auth/signin')
-      return
     }
   }, [session, status, router])
 

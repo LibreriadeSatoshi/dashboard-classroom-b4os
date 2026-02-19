@@ -4,9 +4,9 @@ import React from 'react'
 import { generateAnonymousId, getAvatarColor } from '@/utils/anonymization'
 
 interface LOTRAvatarProps {
-  githubUsername: string
-  size?: 'sm' | 'md' | 'lg' | 'xl'
-  className?: string
+  readonly githubUsername: string
+  readonly size?: 'sm' | 'md' | 'lg' | 'xl'
+  readonly className?: string
 }
 
 const sizeClasses = {
@@ -140,7 +140,7 @@ export default function LOTRAvatar({
       className={`
         ${sizeClasses[size]} 
         rounded-full 
-        bg-gradient-to-br 
+        bg-linear-to-br 
         ${avatarColors.from} 
         ${avatarColors.to} 
         flex 
