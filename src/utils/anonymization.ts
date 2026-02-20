@@ -5,7 +5,7 @@
  * using Middle-earth locations, characters, and elements.
  */
 
-import crypto from 'crypto'
+import crypto from 'node:crypto'
 
 // Locations from Middle-earth
 const LOCATIONS = [
@@ -56,14 +56,14 @@ export function generateAnonymousId(githubUsername: string): string {
     .digest('hex')
 
   // Extract indices from hash
-  const raceIndex = parseInt(hash.substring(0, 2), 16) % RACES.length
-  const locationIndex = parseInt(hash.substring(2, 4), 16) % LOCATIONS.length
-  const elementIndex = parseInt(hash.substring(4, 6), 16) % ELEMENTS.length
+  const raceIndex = Number.parseInt(hash.substring(0, 2), 16) % RACES.length
+  const locationIndex = Number.parseInt(hash.substring(2, 4), 16) % LOCATIONS.length
+  const elementIndex = Number.parseInt(hash.substring(4, 6), 16) % ELEMENTS.length
   
   // Generate number and letter suffix
-  const number = (parseInt(hash.substring(6, 8), 16) % 99) + 1
-  const letterIndex = parseInt(hash.substring(8, 10), 16) % 26
-  const letter = String.fromCharCode(65 + letterIndex) // A-Z
+  const number = (Number.parseInt(hash.substring(6, 8), 16) % 99) + 1
+  const letterIndex = Number.parseInt(hash.substring(8, 10), 16) % 26
+  const letter = String.fromCodePoint(65 + letterIndex) // A-Z
 
   const race = RACES[raceIndex]
   const location = LOCATIONS[locationIndex]
@@ -166,7 +166,7 @@ export function getAvatarColor(anonymousId: string): { from: string; to: string 
       { from: 'from-indigo-400', to: 'to-slate-600' },     // Grey Havens
     ]
     const hash = crypto.createHash('sha256').update(anonymousId).digest('hex')
-    const colorIndex = parseInt(hash.substring(0, 2), 16) % elvishColors.length
+    const colorIndex = Number.parseInt(hash.substring(0, 2), 16) % elvishColors.length
     return elvishColors[colorIndex]
   }
   
@@ -179,7 +179,7 @@ export function getAvatarColor(anonymousId: string): { from: string; to: string 
       { from: 'from-red-400', to: 'to-rose-600' },         // Moria depths
     ]
     const hash = crypto.createHash('sha256').update(anonymousId).digest('hex')
-    const colorIndex = parseInt(hash.substring(2, 4), 16) % dwarvenColors.length
+    const colorIndex = Number.parseInt(hash.substring(2, 4), 16) % dwarvenColors.length
     return dwarvenColors[colorIndex]
   }
   
@@ -192,7 +192,7 @@ export function getAvatarColor(anonymousId: string): { from: string; to: string 
       { from: 'from-teal-400', to: 'to-cyan-600' },        // Brandywine River
     ]
     const hash = crypto.createHash('sha256').update(anonymousId).digest('hex')
-    const colorIndex = parseInt(hash.substring(4, 6), 16) % hobbitColors.length
+    const colorIndex = Number.parseInt(hash.substring(4, 6), 16) % hobbitColors.length
     return hobbitColors[colorIndex]
   }
   
@@ -205,13 +205,13 @@ export function getAvatarColor(anonymousId: string): { from: string; to: string 
       { from: 'from-slate-400', to: 'to-gray-600' },       // Ranger cloak
     ]
     const hash = crypto.createHash('sha256').update(anonymousId).digest('hex')
-    const colorIndex = parseInt(hash.substring(6, 8), 16) % royalColors.length
+    const colorIndex = Number.parseInt(hash.substring(6, 8), 16) % royalColors.length
     return royalColors[colorIndex]
   }
   
   // Default - mixed epic colors for others
   const hash = crypto.createHash('sha256').update(anonymousId).digest('hex')
-  const colorIndex = parseInt(hash.substring(0, 2), 16) % 8
+  const colorIndex = Number.parseInt(hash.substring(0, 2), 16) % 8
   
   const defaultColors = [
     { from: 'from-blue-400', to: 'to-purple-600' },       // Mystical

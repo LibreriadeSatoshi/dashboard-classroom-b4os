@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react'
 import { useSession } from 'next-auth/react'
 
 interface NamePreferenceContextType {
   showRealName: boolean
-  setShowRealName: (value: boolean) => void
+  setShowRealName: (value: boolean) => Promise<void>
   loading: boolean
 }
 
 const NamePreferenceContext = createContext<NamePreferenceContextType | undefined>(undefined)
 
-export function NamePreferenceProvider({ children }: { children: ReactNode }) {
+export function NamePreferenceProvider({ children }: { readonly children: ReactNode }) {
   const { data: session } = useSession()
   const [showRealName, setShowRealNameState] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -79,8 +79,13 @@ export function NamePreferenceProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const value = useMemo(
+    () => ({ showRealName, setShowRealName, loading }),
+    [showRealName, loading]
+  )
+
   return (
-    <NamePreferenceContext.Provider value={{ showRealName, setShowRealName, loading }}>
+    <NamePreferenceContext.Provider value={value}>
       {children}
     </NamePreferenceContext.Provider>
   )
