@@ -35,13 +35,20 @@ function AuthErrorContent() {
     }
   }
 
+  const getBackgroundColor = (iconColor: string) => {
+    if (iconColor === 'text-red-500') return 'bg-red-100'
+    if (iconColor === 'text-orange-500') return 'bg-orange-100'
+    return 'bg-red-100'
+  }
+
   const errorInfo = getErrorMessage(error)
+  const bgColor = getBackgroundColor(errorInfo.iconColor)
 
   return (
     <div className="min-h-screen bg-slate-900 text-white relative overflow-hidden flex items-center justify-center">
       {/* Background similar to signin */}
       <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"></div>
+        <div className="absolute inset-0 bg-linear-to-br from-slate-900 via-slate-800 to-slate-900"></div>
         <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-red-500/8 rounded-full blur-3xl animate-glow-pulse"></div>
         <div className="absolute bottom-1/3 left-1/4 w-64 h-64 bg-orange-500/8 rounded-full blur-3xl animate-glow-pulse" style={{animationDelay: '2s'}}></div>
       </div>
@@ -52,12 +59,8 @@ function AuthErrorContent() {
           <div className="text-center">
             {/* Icon */}
             <div className="relative mb-6">
-              <div className={`absolute -inset-4 bg-gradient-to-r from-red-500/15 via-orange-400/10 to-red-600/15 rounded-full blur-2xl opacity-80 animate-glow-pulse`}></div>
-              <div className={`relative rounded-full p-4 mx-auto w-20 h-20 flex items-center justify-center shadow-2xl ${
-                errorInfo.iconColor === 'text-red-500' ? 'bg-red-100' :
-                errorInfo.iconColor === 'text-orange-500' ? 'bg-orange-100' :
-                'bg-red-100'
-              }`}>
+              <div className={`absolute -inset-4 bg-linear-to-r from-red-500/15 via-orange-400/10 to-red-600/15 rounded-full blur-2xl opacity-80 animate-glow-pulse`}></div>
+              <div className={`relative rounded-full p-4 mx-auto w-20 h-20 flex items-center justify-center shadow-2xl ${bgColor}`}>
                 <errorInfo.icon size={32} className={errorInfo.iconColor} />
               </div>
             </div>
@@ -76,7 +79,7 @@ function AuthErrorContent() {
             <div className="space-y-3">
               <Link
                 href="/auth/signin"
-                className="block w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold py-3 px-6 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all duration-200 shadow-lg"
+                className="block w-full bg-linear-to-r from-amber-500 to-orange-500 text-white font-semibold py-3 px-6 rounded-lg hover:from-amber-600 hover:to-orange-600 transition-all duration-200 shadow-lg"
               >
                 Intentar el Cruce
               </Link>
