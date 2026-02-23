@@ -248,6 +248,14 @@ export default function StudentsTable({ assignments, grades, feedback, averageGr
   const filteredAndSortedUsers = useMemo(() => {
     let filtered = groupedUsers
 
+    // Filter by assignment selected
+    if (selectedAssignment) {
+      filtered = filtered.filter(user => {
+        // Check if user has a grade for this specific assignment
+        return user.grades.some(grade => grade.assignment_name === selectedAssignment)
+      })
+    }
+
     // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(user => {
@@ -304,7 +312,7 @@ export default function StudentsTable({ assignments, grades, feedback, averageGr
     })
 
     return filtered
-  }, [groupedUsers, searchTerm, sortField, sortDirection, searchedUserInfo, isAdmin, currentUsername, userPreferences])
+  }, [groupedUsers, searchTerm, selectedAssignment, sortField, sortDirection, searchedUserInfo, isAdmin, currentUsername, userPreferences])
 
 
   const handleSort = (field: SortField) => {
@@ -429,7 +437,7 @@ export default function StudentsTable({ assignments, grades, feedback, averageGr
                 <option value="">{t('allAdventures')}</option>
                 {assignments.map(assignment => (
                   <option key={assignment.id} value={assignment.name}>
-                    {assignment.name} ({assignment.points_available} {t('points')})
+                    {assignment.name}
                   </option>
                 ))}
               </select>
@@ -551,24 +559,55 @@ export default function StudentsTable({ assignments, grades, feedback, averageGr
                     </td>
                     <td className="px-2 py-3 break-word md:px-4">
                       <div className="flex flex-col items-start gap-1">
-                        <div className="flex items-center gap-2 md:gap-3">
-                          {/* Barra de progreso */}
-                          <div className="w-10 md:w-16 bg-gray-200 rounded-full h-1.5 md:h-2">
-                            <div
-                              className={`h-1.5 md:h-2 rounded-full transition-all duration-300 ${getProgressBarColor(user.averagePercentage)}`}
-                              style={{width: `${Math.min(user.averagePercentage, 100)}%`}}
-                            ></div>
-                          </div>
-                          {/* Porcentaje con pill */}
-                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] md:text-xs font-medium ${getGradeBgColor(user.averagePercentage)} ${getGradeColor(user.averagePercentage)}`}>
-                            {Math.round(user.averagePercentage)}%
-                          </span>
-                        </div>
-                        {isCurrentUser && averageComparison && (
-                          <div className={`flex items-center gap-1 text-xs font-medium ${comparisonColor}`}>
-                            {comparisonIcon}
-                            {averageComparison} ({t('classAverage')}: {averageGrade}%)
-                          </div>
+                        {selectedAssignment ? (
+                          // Show score for selected assignment
+                          <>
+                            {(() => {
+                              const assignmentGrade = user.grades.find(g => g.assignment_name === selectedAssignment)
+                              const pointsAwarded = assignmentGrade ? Number(assignmentGrade.points_awarded || 0) : 0
+                              const percentage = pointsAwarded // Points are 0-100 for a single assignment
+                              return (
+                                <>
+                                  {/* Barra de progreso */}
+                                  <div className="flex items-center gap-2 md:gap-3">
+                                    <div className="w-10 md:w-16 bg-gray-200 rounded-full h-1.5 md:h-2">
+                                      <div
+                                        className={`h-1.5 md:h-2 rounded-full transition-all duration-300 ${getProgressBarColor(percentage)}`}
+                                        style={{width: `${Math.min(percentage, 100)}%`}}
+                                      ></div>
+                                    </div>
+                                    {/* Puntuación con pill */}
+                                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] md:text-xs font-medium ${getGradeBgColor(percentage)} ${getGradeColor(percentage)}`}>
+                                      {pointsAwarded}/100 ({Math.round(percentage)}%)
+                                    </span>
+                                  </div>
+                                </>
+                              )
+                            })()}
+                          </>
+                        ) : (
+                          // Show average percentage (default)
+                          <>
+                            <div className="flex items-center gap-2 md:gap-3">
+                              {/* Barra de progreso */}
+                              <div className="w-10 md:w-16 bg-gray-200 rounded-full h-1.5 md:h-2">
+                                <div
+                                  className={`h-1.5 md:h-2 rounded-full transition-all duration-300 ${getProgressBarColor(user.averagePercentage)}`}
+                                  style={{width: `${Math.min(user.averagePercentage, 100)}%`}}
+                                ></div>
+                              </div>
+                              {/* Porcentaje con pill */}
+                              <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] md:text-xs font-medium ${getGradeBgColor(user.averagePercentage)} ${getGradeColor(user.averagePercentage)}`}>
+                                {Math.round(user.averagePercentage)}%
+                              </span>
+                            </div>
+                            {isCurrentUser && averageComparison && (
+                              <div className={`flex items-center gap-1 text-xs font-medium ${comparisonColor}`}>
+                                {comparisonIcon}
+                                {averageComparison} ({t('classAverage')}: {averageGrade}%)
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     </td>
