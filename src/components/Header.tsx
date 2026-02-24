@@ -43,10 +43,8 @@ export default function Header({ hasUnreadFeedback, isFeedbackOpen, onFeedbackCl
     signOut({ callbackUrl: `/${locale}/auth/signin` })
   }
 
-  const getRoleBadgeColor = (role: string) => {
-    return role === 'administrator'
-      ? 'bg-gray-100 text-gray-800 border-gray-200'
-      : 'bg-gray-100 text-gray-800 border-gray-200'
+  const getRoleBadgeColor = () => {
+    return 'bg-gray-100 text-gray-800 border-gray-200'
   }
 
   const getRoleIcon = (role: string) => {
@@ -83,13 +81,13 @@ export default function Header({ hasUnreadFeedback, isFeedbackOpen, onFeedbackCl
           <div className="relative">
             <button
               onClick={() => setShowDropdown(!showDropdown)}
-              className="flex items-center gap-2 text-white bg-slate-800/80 backdrop-blur-sm hover:bg-slate-700/80 rounded-lg px-3 py-2 transition-all duration-200 border border-slate-600/40 shadow-lg max-w-[200px] sm:max-w-[240px]"
+              className="flex items-center gap-2 text-white bg-slate-800/80 backdrop-blur-sm hover:bg-slate-700/80 rounded-lg px-3 py-2 transition-all duration-200 border border-slate-600/40 shadow-lg max-w-50 sm:max-w-60"
             >
               {/* Role Icon */}
               {getRoleIcon((session.user as any)?.role || 'dev')}
               
               {/* Avatar */}
-              <div className="relative flex-shrink-0">
+              <div className="relative shrink-0">
                 <Image
                   src={session.user?.image || '/default-avatar.png'}
                   alt={(session.user as any)?.githubUsername || 'User'}
@@ -107,7 +105,7 @@ export default function Header({ hasUnreadFeedback, isFeedbackOpen, onFeedbackCl
               {/* Dropdown arrow */}
               <CaretDown
                 size={16}
-                className={`transition-transform duration-200 flex-shrink-0 ${showDropdown ? 'rotate-180' : ''}`}
+                className={`transition-transform duration-200 shrink-0 ${showDropdown ? 'rotate-180' : ''}`}
               />
             </button>
 
@@ -115,9 +113,11 @@ export default function Header({ hasUnreadFeedback, isFeedbackOpen, onFeedbackCl
             {showDropdown && (
               <>
                 {/* Backdrop */}
-                <div
-                  className="fixed inset-0 z-10"
+                <button
+                  type="button"
+                  className="fixed inset-0 z-10 cursor-default"
                   onClick={() => setShowDropdown(false)}
+                  aria-label="Close menu"
                 />
 
                 {/* Menu */}
@@ -130,7 +130,7 @@ export default function Header({ hasUnreadFeedback, isFeedbackOpen, onFeedbackCl
                         alt={githubUsername || 'User'}
                         width={36}
                         height={36}
-                        className="rounded-full flex-shrink-0 aspect-square object-cover"
+                        className="rounded-full shrink-0 aspect-square object-cover"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-gray-900 truncate">
@@ -144,7 +144,7 @@ export default function Header({ hasUnreadFeedback, isFeedbackOpen, onFeedbackCl
 
                     {/* Role Badge */}
                     <div className="mb-3">
-                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border ${getRoleBadgeColor(userRole)}`}>
+                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border ${getRoleBadgeColor()}`}>
                         {userRole === 'administrator' ? tc('admin') : tc('dev')}
                       </div>
                     </div>

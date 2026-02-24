@@ -23,7 +23,7 @@ const FeedbackItem = ({ feedback, onMarkAsRead }: FeedbackItemProps) => {
         {!feedback.read && (
           <button
             onClick={handleMarkAsRead}
-            className="ml-4 flex-shrink-0 text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+            className="ml-4 shrink-0 text-blue-600 hover:text-blue-800 flex items-center space-x-1"
             title="Mark as read"
           >
             <CheckCircle size={20} />

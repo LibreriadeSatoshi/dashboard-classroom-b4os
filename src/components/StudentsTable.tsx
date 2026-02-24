@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps */
 'use client'
 
 import { useState, useMemo, useEffect, Fragment } from 'react'
 import { useSession } from 'next-auth/react'
 import { type Assignment, type ConsolidatedGrade, type StudentFeedback } from '@/lib/supabase'
+import { type Session } from 'next-auth'
 import { MagnifyingGlass, Funnel, CaretUp, CaretDown, Crown, ChatCircleText, CaretRight } from 'phosphor-react'
 import { getBadgeIcon } from '@/lib/badgeIcons'
 import {
@@ -21,7 +21,6 @@ interface StudentsTableProps {
   readonly assignments: Assignment[]
   readonly grades: ConsolidatedGrade[]
   readonly feedback: StudentFeedback[]
-  readonly showRealNames?: boolean
   readonly averageGrade: number
 }
 
@@ -37,14 +36,14 @@ interface GroupedUserData {
   challengeCount: number
 }
 
-export default function StudentsTable({ assignments, grades, feedback, showRealNames = true, averageGrade }: StudentsTableProps) {
+export default function StudentsTable({ assignments, grades, feedback, averageGrade }: StudentsTableProps) {
   const { data: session } = useSession()
   const { showRealName } = useNamePreference()
   const t = useTranslations('table')
 
   // KISS: Extract user info once
-  const isAdmin = (session?.user as any)?.role === 'administrator'
-  const currentUsername = (session?.user as any)?.githubUsername
+  const isAdmin = (session?.user as Session['user'])?.role === 'administrator'
+  const currentUsername = (session?.user as Session['user'])?.githubUsername
 
   // Filter valid grades using centralized business logic
   const validGrades = filterValidGrades(grades)
@@ -126,6 +125,31 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
   const [userPreferences, setUserPreferences] = useState<Record<string, boolean>>({})
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
 
+  // Shared function to load user preferences (defined once to avoid duplication)
+  const loadAllUserPreferences = async (): Promise<void> => {
+    try {
+      const response = await fetch('/api/user-preferences')
+
+      if (!response.ok) {
+        // Silently ignore 401 (not authenticated) - this is expected
+        if (response.status !== 401) {
+          console.error('Error loading user preferences:', response.statusText)
+        }
+        return
+      }
+
+      const data = await response.json()
+
+      const preferences: Record<string, boolean> = {}
+      data.preferences?.forEach((pref: { github_username: string; show_real_name: boolean }) => {
+        preferences[pref.github_username] = pref.show_real_name
+      })
+      setUserPreferences(preferences)
+    } catch (error) {
+      console.error('Error loading user preferences:', error)
+    }
+  }
+
   // Helper to get feedback for a specific assignment
   const getFeedbackForAssignment = (username: string, assignmentName: string) => {
     return feedback.filter(
@@ -146,32 +170,8 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
     })
   }
 
-  // Load all user preferences
+  // Load all user preferences on mount and poll for changes
   useEffect(() => {
-    const loadAllUserPreferences = async () => {
-      try {
-        const response = await fetch('/api/user-preferences')
-
-        if (!response.ok) {
-          // Silently ignore 401 (not authenticated) - this is expected
-          if (response.status !== 401) {
-            console.error('Error loading user preferences:', response.statusText)
-          }
-          return
-        }
-
-        const data = await response.json()
-
-        const preferences: Record<string, boolean> = {}
-        data.preferences?.forEach((pref: { github_username: string; show_real_name: boolean }) => {
-          preferences[pref.github_username] = pref.show_real_name
-        })
-        setUserPreferences(preferences)
-      } catch (error) {
-        console.error('Error loading user preferences:', error)
-      }
-    }
-
     loadAllUserPreferences()
 
     // Poll for changes every 5 seconds (replaces realtime subscription)
@@ -184,30 +184,6 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
 
   // Also reload preferences when the current user's preference changes
   useEffect(() => {
-    const loadAllUserPreferences = async () => {
-      try {
-        const response = await fetch('/api/user-preferences')
-
-        if (!response.ok) {
-          // Silently ignore 401 (not authenticated) - this is expected
-          if (response.status !== 401) {
-            console.error('Error loading user preferences:', response.statusText)
-          }
-          return
-        }
-
-        const data = await response.json()
-
-        const preferences: Record<string, boolean> = {}
-        data.preferences?.forEach((pref: { github_username: string; show_real_name: boolean }) => {
-          preferences[pref.github_username] = pref.show_real_name
-        })
-        setUserPreferences(preferences)
-      } catch (error) {
-        console.error('Error loading user preferences:', error)
-      }
-    }
-
     loadAllUserPreferences()
   }, [session?.user, showRealName]) // Reload when session or current user's preference changes
 
@@ -257,16 +233,28 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
   }, [searchTerm, grades, isAdmin, currentUsername])
 
   // Helper for sorting comparison (must be defined before useMemo)
-  const compareValues = (aValue: string | number, bValue: string | number, direction: SortDirection) => {
-    if (direction === 'asc') {
-      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
+  const compareValues = (aValue: string | number, bValue: string | number, direction: SortDirection): number => {
+    const isAscending = direction === 'asc'
+    
+    if (aValue === bValue) return 0
+    
+    if (isAscending) {
+      return aValue < bValue ? -1 : 1
     }
-    return aValue > bValue ? -1 : aValue < bValue ? 1 : 0
+    return aValue > bValue ? -1 : 1
   }
 
   // Filter and sort grouped users
   const filteredAndSortedUsers = useMemo(() => {
     let filtered = groupedUsers
+
+    // Filter by assignment selected
+    if (selectedAssignment) {
+      filtered = filtered.filter(user => {
+        // Check if user has a grade for this specific assignment
+        return user.grades.some(grade => grade.assignment_name === selectedAssignment)
+      })
+    }
 
     // Filter by search term
     if (searchTerm) {
@@ -324,7 +312,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
     })
 
     return filtered
-  }, [groupedUsers, searchTerm, sortField, sortDirection, searchedUserInfo, isAdmin, currentUsername, userPreferences])
+  }, [groupedUsers, searchTerm, selectedAssignment, sortField, sortDirection, searchedUserInfo, isAdmin, currentUsername, userPreferences])
 
 
   const handleSort = (field: SortField) => {
@@ -400,8 +388,8 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
 
           {/* Search result indicator */}
           {searchedUserInfo && (
-            <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3 shadow-sm">
-              <div className="flex-shrink-0">
+            <div className="bg-linear-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3 shadow-sm">
+              <div className="shrink-0">
                 <Crown className="h-6 w-6 text-amber-600" />
               </div>
               <div>
@@ -444,12 +432,12 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
               <select
                 value={selectedAssignment}
                 onChange={(e) => setSelectedAssignment(e.target.value)}
-                className="pl-10 pr-8 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 appearance-none min-w-[200px] transition-all duration-200"
+                className="pl-10 pr-8 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 appearance-none min-w-50 transition-all duration-200"
               >
                 <option value="">{t('allAdventures')}</option>
                 {assignments.map(assignment => (
                   <option key={assignment.id} value={assignment.name}>
-                    {assignment.name} ({assignment.points_available} {t('points')})
+                    {assignment.name}
                   </option>
                 ))}
               </select>
@@ -526,7 +514,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
                   >
                     <td className="px-2 py-3 whitespace-nowrap md:px-4">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0">
+                        <div className="shrink-0">
                           <LOTRAvatar
                             githubUsername={user.githubUsername}
                             size="sm"
@@ -535,7 +523,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
                         </div>
                         <div className="ml-2 md:ml-3">
                           <div className="flex items-center gap-1 md:gap-2">
-                            <div className="text-xs md:text-sm font-medium text-gray-900 truncate max-w-[80px] md:max-w-none">
+                            <div className="text-xs md:text-sm font-medium text-gray-900 truncate max-w-20 md:max-w-none">
                               {displayName}
                             </div>
                             {isSearchedUser && (
@@ -571,24 +559,55 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
                     </td>
                     <td className="px-2 py-3 break-word md:px-4">
                       <div className="flex flex-col items-start gap-1">
-                        <div className="flex items-center gap-2 md:gap-3">
-                          {/* Barra de progreso */}
-                          <div className="w-10 md:w-16 bg-gray-200 rounded-full h-1.5 md:h-2">
-                            <div
-                              className={`h-1.5 md:h-2 rounded-full transition-all duration-300 ${getProgressBarColor(user.averagePercentage)}`}
-                              style={{width: `${Math.min(user.averagePercentage, 100)}%`}}
-                            ></div>
-                          </div>
-                          {/* Porcentaje con pill */}
-                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] md:text-xs font-medium ${getGradeBgColor(user.averagePercentage)} ${getGradeColor(user.averagePercentage)}`}>
-                            {Math.round(user.averagePercentage)}%
-                          </span>
-                        </div>
-                        {isCurrentUser && averageComparison && (
-                          <div className={`flex items-center gap-1 text-xs font-medium ${comparisonColor}`}>
-                            {comparisonIcon}
-                            {averageComparison} ({t('classAverage')}: {averageGrade}%)
-                          </div>
+                        {selectedAssignment ? (
+                          // Show score for selected assignment
+                          <>
+                            {(() => {
+                              const assignmentGrade = user.grades.find(g => g.assignment_name === selectedAssignment)
+                              const pointsAwarded = assignmentGrade ? Number(assignmentGrade.points_awarded || 0) : 0
+                              const percentage = pointsAwarded // Points are 0-100 for a single assignment
+                              return (
+                                <>
+                                  {/* Barra de progreso */}
+                                  <div className="flex items-center gap-2 md:gap-3">
+                                    <div className="w-10 md:w-16 bg-gray-200 rounded-full h-1.5 md:h-2">
+                                      <div
+                                        className={`h-1.5 md:h-2 rounded-full transition-all duration-300 ${getProgressBarColor(percentage)}`}
+                                        style={{width: `${Math.min(percentage, 100)}%`}}
+                                      ></div>
+                                    </div>
+                                    {/* Puntuación con pill */}
+                                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] md:text-xs font-medium ${getGradeBgColor(percentage)} ${getGradeColor(percentage)}`}>
+                                      {pointsAwarded}/100 ({Math.round(percentage)}%)
+                                    </span>
+                                  </div>
+                                </>
+                              )
+                            })()}
+                          </>
+                        ) : (
+                          // Show average percentage (default)
+                          <>
+                            <div className="flex items-center gap-2 md:gap-3">
+                              {/* Barra de progreso */}
+                              <div className="w-10 md:w-16 bg-gray-200 rounded-full h-1.5 md:h-2">
+                                <div
+                                  className={`h-1.5 md:h-2 rounded-full transition-all duration-300 ${getProgressBarColor(user.averagePercentage)}`}
+                                  style={{width: `${Math.min(user.averagePercentage, 100)}%`}}
+                                ></div>
+                              </div>
+                              {/* Porcentaje con pill */}
+                              <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] md:text-xs font-medium ${getGradeBgColor(user.averagePercentage)} ${getGradeColor(user.averagePercentage)}`}>
+                                {Math.round(user.averagePercentage)}%
+                              </span>
+                            </div>
+                            {isCurrentUser && averageComparison && (
+                              <div className={`flex items-center gap-1 text-xs font-medium ${comparisonColor}`}>
+                                {comparisonIcon}
+                                {averageComparison} ({t('classAverage')}: {averageGrade}%)
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     </td>
@@ -614,7 +633,7 @@ export default function StudentsTable({ assignments, grades, feedback, showRealN
                           <div className="text-sm font-medium text-gray-700 mb-2">
                             {t('challengeDetails')} ({user.challengeCount})
                           </div>
-                          {user.grades.map((grade, idx) => {
+                          {user.grades.map((grade) => {
                             // Each challenge is worth 100 points
                             const CHALLENGE_POINTS = 100
                             const pointsAwarded = Number(grade.points_awarded) || 0

@@ -47,7 +47,7 @@ export default function UserBadgesDropdown({ badges, currentPoints }: UserBadges
             </div>
           </div>
           {nextBadge && (
-            <div className="text-[10px] text-amber-600 text-right flex-shrink-0">
+            <div className="text-[10px] text-amber-600 text-right shrink-0">
               <div>+{nextBadge.level - currentPoints}</div>
               <div className="text-gray-400">to next</div>
             </div>

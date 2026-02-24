@@ -26,11 +26,11 @@ export default function SignIn() {
     <div className="min-h-screen bg-slate-900 text-white relative overflow-hidden flex items-center justify-center">
       {/* Epic LOTR Background - Reused from main page */}
       <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"></div>
+        <div className="absolute inset-0 bg-linear-to-br from-slate-900 via-slate-800 to-slate-900"></div>
 
         {/* Mountain silhouettes */}
         <div className="absolute inset-0">
-          <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-slate-900/90 to-transparent"></div>
+          <div className="absolute bottom-0 left-0 w-full h-64 bg-linear-to-t from-slate-900/90 to-transparent"></div>
           <svg className="absolute bottom-0 left-0 w-full h-64" viewBox="0 0 1200 300" preserveAspectRatio="none">
             <path d="M0,300 L0,200 Q150,150 300,180 Q450,210 600,160 Q750,110 900,140 Q1050,170 1200,120 L1200,300 Z"
                   fill="rgba(15, 23, 42, 0.8)" />
@@ -57,9 +57,9 @@ export default function SignIn() {
             { left: '40%', top: '25%', delay: '2.8s', duration: '6.8s' },
             { left: '70%', top: '65%', delay: '3.8s', duration: '9.5s' },
             { left: '30%', top: '85%', delay: '4.8s', duration: '7.7s' }
-          ].map((particle, i) => (
+          ].map((particle) => (
             <div
-              key={i}
+              key={`${particle.left}-${particle.top}-${particle.delay}`}
               className="absolute w-1 h-1 bg-amber-400 rounded-full animate-drift opacity-60"
               style={{
                 left: particle.left,
@@ -82,7 +82,7 @@ export default function SignIn() {
           <div className="text-center">
             {/* Logo */}
             <div className="relative mb-8">
-              <div className="absolute -inset-4 bg-gradient-to-r from-amber-500/15 via-yellow-400/10 to-amber-600/15 rounded-full blur-2xl opacity-80 animate-glow-pulse"></div>
+              <div className="absolute -inset-4 bg-linear-to-r from-amber-500/15 via-yellow-400/10 to-amber-600/15 rounded-full blur-2xl opacity-80 animate-glow-pulse"></div>
               <div className="relative bg-white rounded-2xl p-4 mx-auto w-20 h-20 flex items-center justify-center shadow-2xl">
                 <Image 
                   src="https://res.cloudinary.com/dkuwkpihs/image/upload/v1758759628/web-app-manifest-192x192_dkecn9.png" 
@@ -109,7 +109,7 @@ export default function SignIn() {
             {/* Sign In Button */}
             <button
               onClick={handleSignIn}
-              className="w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold py-3 px-6 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-all duration-200 shadow-lg flex items-center justify-center gap-2 group"
+              className="w-full bg-linear-to-r from-orange-500 to-amber-500 text-white font-semibold py-3 px-6 rounded-lg hover:from-orange-600 hover:to-amber-600 transition-all duration-200 shadow-lg flex items-center justify-center gap-2 group"
             >
               <MagnifyingGlass size={20} className="group-hover:scale-110 transition-transform" />
               Sign In

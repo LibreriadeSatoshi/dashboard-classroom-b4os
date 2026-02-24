@@ -27,7 +27,7 @@ interface DashboardClientProps {
 
 export default function DashboardClient({ initialData, assignmentProgressData }: Readonly<DashboardClientProps>) {
   const { students, assignments, grades, feedback } = initialData
-  const { showRealName } = useNamePreference()
+  useNamePreference()
 
   const t = useTranslations('dashboard')
   const tc = useTranslations('common')
@@ -99,11 +99,11 @@ export default function DashboardClient({ initialData, assignmentProgressData }:
       {/* Epic LOTR Background */}
       <div className="fixed inset-0 z-0">
         {/* Base gradient - Deep Middle-earth atmosphere */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"></div>
+        <div className="absolute inset-0 bg-linear-to-br from-slate-900 via-slate-800 to-slate-900"></div>
         
         {/* Mountain silhouettes */}
         <div className="absolute inset-0">
-          <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-slate-900/90 to-transparent"></div>
+          <div className="absolute bottom-0 left-0 w-full h-64 bg-linear-to-t from-slate-900/90 to-transparent"></div>
           <svg className="absolute bottom-0 left-0 w-full h-64" viewBox="0 0 1200 300" preserveAspectRatio="none">
             <path d="M0,300 L0,200 Q150,150 300,180 Q450,210 600,160 Q750,110 900,140 Q1050,170 1200,120 L1200,300 Z" 
                   fill="rgba(15, 23, 42, 0.8)" />
@@ -115,24 +115,24 @@ export default function DashboardClient({ initialData, assignmentProgressData }:
         {/* Floating particles - like fireflies or magic */}
         <div className="absolute inset-0 overflow-hidden">
           {[
-            { left: '15%', top: '20%', delay: '0s', duration: '8s' },
-            { left: '35%', top: '60%', delay: '1s', duration: '7s' },
-            { left: '75%', top: '30%', delay: '2s', duration: '9s' },
-            { left: '60%', top: '80%', delay: '3s', duration: '6s' },
-            { left: '20%', top: '70%', delay: '4s', duration: '8s' },
-            { left: '80%', top: '15%', delay: '0.5s', duration: '7.5s' },
-            { left: '45%', top: '40%', delay: '1.5s', duration: '8.5s' },
-            { left: '90%', top: '55%', delay: '2.5s', duration: '6.5s' },
-            { left: '25%', top: '90%', delay: '3.5s', duration: '7.8s' },
-            { left: '65%', top: '10%', delay: '4.5s', duration: '9.2s' },
-            { left: '10%', top: '45%', delay: '0.8s', duration: '8.8s' },
-            { left: '85%', top: '75%', delay: '1.8s', duration: '7.2s' },
-            { left: '40%', top: '25%', delay: '2.8s', duration: '6.8s' },
-            { left: '70%', top: '65%', delay: '3.8s', duration: '9.5s' },
-            { left: '30%', top: '85%', delay: '4.8s', duration: '7.7s' }
-          ].map((particle, i) => (
+            { id: 'p1', left: '15%', top: '20%', delay: '0s', duration: '8s' },
+            { id: 'p2', left: '35%', top: '60%', delay: '1s', duration: '7s' },
+            { id: 'p3', left: '75%', top: '30%', delay: '2s', duration: '9s' },
+            { id: 'p4', left: '60%', top: '80%', delay: '3s', duration: '6s' },
+            { id: 'p5', left: '20%', top: '70%', delay: '4s', duration: '8s' },
+            { id: 'p6', left: '80%', top: '15%', delay: '0.5s', duration: '7.5s' },
+            { id: 'p7', left: '45%', top: '40%', delay: '1.5s', duration: '8.5s' },
+            { id: 'p8', left: '90%', top: '55%', delay: '2.5s', duration: '6.5s' },
+            { id: 'p9', left: '25%', top: '90%', delay: '3.5s', duration: '7.8s' },
+            { id: 'p10', left: '65%', top: '10%', delay: '4.5s', duration: '9.2s' },
+            { id: 'p11', left: '10%', top: '45%', delay: '0.8s', duration: '8.8s' },
+            { id: 'p12', left: '85%', top: '75%', delay: '1.8s', duration: '7.2s' },
+            { id: 'p13', left: '40%', top: '25%', delay: '2.8s', duration: '6.8s' },
+            { id: 'p14', left: '70%', top: '65%', delay: '3.8s', duration: '9.5s' },
+            { id: 'p15', left: '30%', top: '85%', delay: '4.8s', duration: '7.7s' }
+          ].map((particle) => (
             <div
-              key={i}
+              key={particle.id}
               className="absolute w-1 h-1 bg-amber-400 rounded-full animate-drift opacity-60"
               style={{
                 left: particle.left,
@@ -143,19 +143,19 @@ export default function DashboardClient({ initialData, assignmentProgressData }:
             />
           ))}
           {[
-            { left: '25%', top: '35%', delay: '0s' },
-            { left: '65%', top: '20%', delay: '1s' },
-            { left: '45%', top: '70%', delay: '2s' },
-            { left: '85%', top: '50%', delay: '3s' },
-            { left: '15%', top: '60%', delay: '0.5s' },
-            { left: '75%', top: '85%', delay: '1.5s' },
-            { left: '35%', top: '15%', delay: '2.5s' },
-            { left: '55%', top: '45%', delay: '3.5s' },
-            { left: '90%', top: '25%', delay: '1.2s' },
-            { left: '10%', top: '80%', delay: '2.7s' }
-          ].map((star, i) => (
+            { id: 's1', left: '25%', top: '35%', delay: '0s' },
+            { id: 's2', left: '65%', top: '20%', delay: '1s' },
+            { id: 's3', left: '45%', top: '70%', delay: '2s' },
+            { id: 's4', left: '85%', top: '50%', delay: '3s' },
+            { id: 's5', left: '15%', top: '60%', delay: '0.5s' },
+            { id: 's6', left: '75%', top: '85%', delay: '1.5s' },
+            { id: 's7', left: '35%', top: '15%', delay: '2.5s' },
+            { id: 's8', left: '55%', top: '45%', delay: '3.5s' },
+            { id: 's9', left: '90%', top: '25%', delay: '1.2s' },
+            { id: 's10', left: '10%', top: '80%', delay: '2.7s' }
+          ].map((star) => (
             <div
-              key={`star-${i}`}
+              key={star.id}
               className="absolute w-2 h-2 bg-blue-300 rounded-full animate-glow-pulse opacity-40"
               style={{
                 left: star.left,
@@ -189,14 +189,14 @@ export default function DashboardClient({ initialData, assignmentProgressData }:
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center justify-between bg-slate-800/40 backdrop-blur-lg rounded-3xl p-8 border border-slate-600/40 shadow-2xl relative overflow-hidden">
             {/* Subtle overlay to improve readability without blocking background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-900/30 via-slate-800/20 to-slate-900/30 rounded-3xl"></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-amber-900/5 via-transparent to-blue-900/5 rounded-3xl"></div>
+            <div className="absolute inset-0 bg-linear-to-br from-slate-900/30 via-slate-800/20 to-slate-900/30 rounded-3xl"></div>
+            <div className="absolute inset-0 bg-linear-to-r from-amber-900/5 via-transparent to-blue-900/5 rounded-3xl"></div>
             <div className="text-center lg:text-left mb-8 lg:mb-0 relative z-10">
               {/* B4OS Main Branding */}
               <div className="flex flex-col items-center lg:items-start mb-6 relative">
                 {/* Epic logo with enhanced effects */}
                 <div className="relative mb-4">
-                  <div className="absolute -inset-8 bg-gradient-to-r from-amber-500/15 via-yellow-400/10 to-amber-600/15 rounded-full blur-2xl opacity-80 animate-glow-pulse"></div>
+                  <div className="absolute -inset-8 bg-linear-to-r from-amber-500/15 via-yellow-400/10 to-amber-600/15 rounded-full blur-2xl opacity-80 animate-glow-pulse"></div>
                   <div className="absolute inset-0 bg-amber-400/50 rounded-full blur-xl animate-glow-pulse"></div>
                   <div className="absolute inset-0 bg-amber-300/30 rounded-full blur-lg animate-pulse" style={{animationDelay: '1s'}}></div>
                   <Image 
@@ -228,9 +228,9 @@ export default function DashboardClient({ initialData, assignmentProgressData }:
             
             <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl p-8 border border-slate-600/50 shadow-2xl relative overflow-hidden z-10">
               {/* Enhanced glass effect background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-800/60 to-slate-900/80 backdrop-blur-md"></div>
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/8 to-blue-500/5"></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent"></div>
+              <div className="absolute inset-0 bg-linear-to-br from-slate-800/60 to-slate-900/80 backdrop-blur-md"></div>
+              <div className="absolute inset-0 bg-linear-to-br from-amber-500/8 to-blue-500/5"></div>
+              <div className="absolute inset-0 bg-linear-to-t from-slate-900/20 to-transparent"></div>
               <div className="relative z-10">
                 <h4 className="text-white font-bold text-xl mb-6 flex items-center gap-3">
                   <Shield className="h-7 w-7 text-amber-400 drop-shadow-lg" />
@@ -298,7 +298,6 @@ export default function DashboardClient({ initialData, assignmentProgressData }:
           assignments={assignments}
           grades={grades}
           feedback={feedback}
-          showRealNames={showRealName}
           averageGrade={stats.averageGrade}
         />
       </div>

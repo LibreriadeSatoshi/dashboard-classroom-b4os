@@ -40,7 +40,7 @@ const FeedbackBell = ({
       >
         <Bell size={24} className="text-white" />
         {showBadge && (
-          <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-red-500 ring-2 ring-white text-[10px] font-bold text-white px-1">
+          <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-4.5 h-4.5 rounded-full bg-red-500 ring-2 ring-white text-[10px] font-bold text-white px-1">
             {totalUnread > 99 ? '99+' : totalUnread}
           </span>
         )}
@@ -48,7 +48,7 @@ const FeedbackBell = ({
       
       {/* Badge earned notification */}
       {newlyEarnedBadge && (
-        <div className="absolute right-0 top-full mt-2 w-64 bg-gradient-to-r from-amber-500 to-yellow-400 rounded-lg shadow-xl p-3 animate-bounce">
+        <div className="absolute right-0 top-full mt-2 w-64 bg-linear-to-r from-amber-500 to-yellow-400 rounded-lg shadow-xl p-3 animate-bounce">
           <div className="flex items-center gap-2">
             <div className="bg-white rounded-full p-1">
               <Trophy size={20} className="text-amber-600" />
